@@ -1,0 +1,12 @@
+{
+  "shop": "Nona Byte Pizza",
+  "pizzas": [
+    {"id": "margherita", "name": "Margherita", "ingredients": ["mozzarella", "tomato", "basil"], "prices": {"S": 32, "M": 42, "L": 52}, "vegetarian": true, "available": true},
+    {"id": "pepperoni", "name": "Pepperoni", "ingredients": ["pepperoni", "onion", "mozzarella"], "prices": {"S": 30, "M": 40, "L": 50}, "vegetarian": false, "available": false},
+    {"id": "ham-egg", "name": "Ham & Egg", "ingredients": ["ham", "egg", "onion", "peas", "mozzarella"], "prices": {"S": 35, "M": 45, "L": 55}, "vegetarian": false, "available": true},
+    {"id": "four-cheese", "name": "Four Cheese", "ingredients": ["mozzarella", "provolone", "parmesan", "gorgonzola"], "prices": {"S": 38, "M": 48, "L": 58}, "vegetarian": true, "available": true},
+    {"id": "chicken", "name": "Chicken & Cream Cheese", "ingredients": ["chicken", "cream cheese", "corn", "mozzarella"], "prices": {"S": 34, "M": 44, "L": 54}, "vegetarian": false, "available": true},
+    {"id": "nona-special", "name": "Nona Special", "ingredients": ["mushroom", "bell pepper", "zucchini", "mozzarella"], "prices": {"S": 36, "M": 46, "L": 56}, "vegetarian": true, "available": true},
+    {"id": "banana", "name": "Banana Cinnamon", "ingredients": ["banana", "cinnamon", "sugar", "condensed milk"], "prices": {"S": 28, "M": 38, "L": 48}, "vegetarian": true, "available": true}
+  ]
+}

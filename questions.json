@@ -1,0 +1,8 @@
+[
+  {"question": "How much is a large Margherita?", "expected": ["52"]},
+  {"question": "Which pizza is sold out today?", "expected": ["pepperoni"]},
+  {"question": "Which pizzas are vegetarian?", "expected": ["margherita", "four cheese", "nona special", "banana"]},
+  {"question": "Which pizza has mushroom and bell pepper?", "expected": ["nona special"]},
+  {"question": "What is the cheapest small pizza?", "expected": ["banana"]},
+  {"question": "How much is a medium Ham & Egg plus a large Four Cheese?", "expected": ["103"]}
+]
