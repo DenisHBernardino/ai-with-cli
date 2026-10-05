@@ -1,0 +1,111 @@
+{
+  "isolated": {
+    "claude-sonnet-5-5": {
+      "model": "claude-sonnet-5-5",
+      "calls": [
+        {
+          "call": "list_menu()",
+          "tokens": {
+            "pretty": 869,
+            "compact": 563,
+            "text": 416
+          },
+          "lines": {
+            "pretty": 120,
+            "compact": 1,
+            "text": 14
+          }
+        },
+        {
+          "call": "list_menu(vegetarian=true)",
+          "tokens": {
+            "pretty": 494,
+            "compact": 320,
+            "text": 251
+          },
+          "lines": {
+            "pretty": 69,
+            "compact": 1,
+            "text": 8
+          }
+        },
+        {
+          "call": "list_menu(available=true)",
+          "tokens": {
+            "pretty": 751,
+            "compact": 486,
+            "text": 359
+          },
+          "lines": {
+            "pretty": 104,
+            "compact": 1,
+            "text": 12
+          }
+        },
+        {
+          "call": "search_pizzas(terms=[\"mushroom\"])",
+          "tokens": {
+            "pretty": 129,
+            "compact": 84,
+            "text": 64
+          },
+          "lines": {
+            "pretty": 19,
+            "compact": 1,
+            "text": 2
+          }
+        },
+        {
+          "call": "get_price(pizza=\"Margherita\", size=\"L\")",
+          "tokens": {
+            "pretty": 38,
+            "compact": 26,
+            "text": 11
+          },
+          "lines": {
+            "pretty": 6,
+            "compact": 1,
+            "text": 1
+          }
+        }
+      ],
+      "totals": {
+        "pretty": 2281,
+        "compact": 1479,
+        "text": 1101
+      }
+    }
+  },
+  "e2e": {
+    "claude-sonnet-5-5": {
+      "CLI": {
+        "correct": 6.0,
+        "calls": 8.0,
+        "tool_output": 1878.0,
+        "input": 8758.666666666666,
+        "output": 743.6666666666666
+      },
+      "MCP, Pretty JSON": {
+        "correct": 6.0,
+        "calls": 8.0,
+        "tool_output": 3231.0,
+        "input": 13381.0,
+        "output": 912.6666666666666
+      },
+      "MCP, Compact JSON": {
+        "correct": 6.0,
+        "calls": 8.0,
+        "tool_output": 2099.0,
+        "input": 12246.333333333334,
+        "output": 880.0
+      },
+      "MCP, Plain text": {
+        "correct": 6.0,
+        "calls": 8.0,
+        "tool_output": 1544.0,
+        "input": 11694.0,
+        "output": 891.0
+      }
+    }
+  }
+}

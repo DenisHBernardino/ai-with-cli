@@ -1,0 +1,613 @@
+{
+  "model": "claude-sonnet-5-5",
+  "answers": {
+    "How much is a large Margherita?": {
+      "none": {
+        "answer": "I don't have our current price list in front of me, so I can't give you an exact price for a large Margherita. The menu or the order page will have the latest pricing, and the staff at your nearest location can confirm it too.",
+        "tokens": 190,
+        "input_tokens": 56,
+        "output_tokens": 134,
+        "tool_output_tokens": 0,
+        "calls": 0,
+        "seconds": 2.5,
+        "trace": [],
+        "correct": false
+      },
+      "cli": {
+        "answer": "A large Margherita costs $52.00.",
+        "tokens": 1131,
+        "input_tokens": 1063,
+        "output_tokens": 68,
+        "tool_output_tokens": 11,
+        "calls": 1,
+        "seconds": 3.0,
+        "trace": [
+          {
+            "call": "pizza price margherita --size L",
+            "output": "Margherita (L): $52.00",
+            "tokens": 11
+          }
+        ],
+        "correct": true
+      },
+      "mcp": {
+        "answer": "A large Margherita costs 52, and it's available today.",
+        "tokens": 1790,
+        "input_tokens": 1698,
+        "output_tokens": 92,
+        "tool_output_tokens": 38,
+        "calls": 1,
+        "seconds": 2.6,
+        "trace": [
+          {
+            "call": "get_price({\"pizza\": \"Margherita\", \"size\": \"L\"})",
+            "output": "{\n  \"pizza\": \"Margherita\",\n  \"size\": \"L\",\n  \"price\": 52,\n  \"available\": true\n}",
+            "tokens": 38
+          }
+        ],
+        "correct": true
+      },
+      "mcp:compact": {
+        "answer": "A large Margherita costs 52, and it's available today.",
+        "tokens": 1778,
+        "input_tokens": 1686,
+        "output_tokens": 92,
+        "tool_output_tokens": 26,
+        "calls": 1,
+        "seconds": 2.4,
+        "trace": [
+          {
+            "call": "get_price({\"pizza\": \"Margherita\", \"size\": \"L\"})",
+            "output": "{\"pizza\":\"Margherita\",\"size\":\"L\",\"price\":52,\"available\":true}",
+            "tokens": 26
+          }
+        ],
+        "correct": true
+      },
+      "mcp:text": {
+        "answer": "A large Margherita costs $52.00.",
+        "tokens": 1759,
+        "input_tokens": 1671,
+        "output_tokens": 88,
+        "tool_output_tokens": 11,
+        "calls": 1,
+        "seconds": 6.3,
+        "trace": [
+          {
+            "call": "get_price({\"pizza\": \"Margherita\", \"size\": \"L\"})",
+            "output": "Margherita (L): $52.00",
+            "tokens": 11
+          }
+        ],
+        "correct": true
+      }
+    },
+    "Which pizza is sold out today?": {
+      "none": {
+        "answer": "I don't have today's inventory info, so I can't tell which pizza is sold out. Please check with the staff at the counter or look at the menu board. If you tell me what you're craving, I can suggest a few alternatives.",
+        "tokens": 154,
+        "input_tokens": 57,
+        "output_tokens": 97,
+        "tool_output_tokens": 0,
+        "calls": 0,
+        "seconds": 1.5,
+        "trace": [],
+        "correct": false
+      },
+      "cli": {
+        "answer": "Pepperoni is sold out today. All the other pizzas are available.",
+        "tokens": 1994,
+        "input_tokens": 1920,
+        "output_tokens": 74,
+        "tool_output_tokens": 869,
+        "calls": 1,
+        "seconds": 3.5,
+        "trace": [
+          {
+            "call": "pizza menu --json",
+            "output": "[\n  {\n    \"id\": \"margherita\",\n    \"name\": \"Margherita\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"tomato\",\n      \"basil\"\n    ],\n    \"prices\": {\n      \"S\": 32,\n      \"M\": 42,\n      \"L\": 52\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"pepperoni\",\n    \"name\": \"Pepperoni\",\n    \"ingredients\": [\n      \"pepperoni\",\n      \"onion\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 30,\n      \"M\": 40,\n      \"L\": 50\n    },\n    \"vegetarian\": false,\n    \"available\": false\n  },\n  {\n    \"id\": \"ham-egg\",\n    \"name\": \"Ham & Egg\",\n    \"ingredients\": [\n      \"ham\",\n      \"egg\",\n      \"onion\",\n      \"peas\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 35,\n      \"M\": 45,\n      \"L\": 55\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"four-cheese\",\n    \"name\": \"Four Cheese\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"provolone\",\n      \"parmesan\",\n      \"gorgonzola\"\n    ],\n    \"prices\": {\n      \"S\": 38,\n      \"M\": 48,\n      \"L\": 58\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"chicken\",\n    \"name\": \"Chicken & Cream Cheese\",\n    \"ingredients\": [\n      \"chicken\",\n      \"cream cheese\",\n      \"corn\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 34,\n      \"M\": 44,\n      \"L\": 54\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"nona-special\",\n    \"name\": \"Nona Special\",\n    \"ingredients\": [\n      \"mushroom\",\n      \"bell pepper\",\n      \"zucchini\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 36,\n      \"M\": 46,\n      \"L\": 56\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"banana\",\n    \"name\": \"Banana Cinnamon\",\n    \"ingredients\": [\n      \"banana\",\n      \"cinnamon\",\n      \"sugar\",\n      \"condensed milk\"\n    ],\n    \"prices\": {\n      \"S\": 28,\n      \"M\": 38,\n      \"L\": 48\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  }\n]",
+            "tokens": 869
+          }
+        ],
+        "correct": true
+      },
+      "mcp": {
+        "answer": "Pepperoni is sold out today. Everything else on the menu is available.",
+        "tokens": 3495,
+        "input_tokens": 3366,
+        "output_tokens": 129,
+        "tool_output_tokens": 1620,
+        "calls": 2,
+        "seconds": 3.0,
+        "trace": [
+          {
+            "call": "list_menu({})",
+            "output": "[\n  {\n    \"id\": \"margherita\",\n    \"name\": \"Margherita\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"tomato\",\n      \"basil\"\n    ],\n    \"prices\": {\n      \"S\": 32,\n      \"M\": 42,\n      \"L\": 52\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"pepperoni\",\n    \"name\": \"Pepperoni\",\n    \"ingredients\": [\n      \"pepperoni\",\n      \"onion\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 30,\n      \"M\": 40,\n      \"L\": 50\n    },\n    \"vegetarian\": false,\n    \"available\": false\n  },\n  {\n    \"id\": \"ham-egg\",\n    \"name\": \"Ham & Egg\",\n    \"ingredients\": [\n      \"ham\",\n      \"egg\",\n      \"onion\",\n      \"peas\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 35,\n      \"M\": 45,\n      \"L\": 55\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"four-cheese\",\n    \"name\": \"Four Cheese\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"provolone\",\n      \"parmesan\",\n      \"gorgonzola\"\n    ],\n    \"prices\": {\n      \"S\": 38,\n      \"M\": 48,\n      \"L\": 58\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"chicken\",\n    \"name\": \"Chicken & Cream Cheese\",\n    \"ingredients\": [\n      \"chicken\",\n      \"cream cheese\",\n      \"corn\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 34,\n      \"M\": 44,\n      \"L\": 54\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"nona-special\",\n    \"name\": \"Nona Special\",\n    \"ingredients\": [\n      \"mushroom\",\n      \"bell pepper\",\n      \"zucchini\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 36,\n      \"M\": 46,\n      \"L\": 56\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"banana\",\n    \"name\": \"Banana Cinnamon\",\n    \"ingredients\": [\n      \"banana\",\n      \"cinnamon\",\n      \"sugar\",\n      \"condensed milk\"\n    ],\n    \"prices\": {\n      \"S\": 28,\n      \"M\": 38,\n      \"L\": 48\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  }\n]",
+            "tokens": 869
+          },
+          {
+            "call": "list_menu({\"available\": true})",
+            "output": "[\n  {\n    \"id\": \"margherita\",\n    \"name\": \"Margherita\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"tomato\",\n      \"basil\"\n    ],\n    \"prices\": {\n      \"S\": 32,\n      \"M\": 42,\n      \"L\": 52\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"ham-egg\",\n    \"name\": \"Ham & Egg\",\n    \"ingredients\": [\n      \"ham\",\n      \"egg\",\n      \"onion\",\n      \"peas\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 35,\n      \"M\": 45,\n      \"L\": 55\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"four-cheese\",\n    \"name\": \"Four Cheese\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"provolone\",\n      \"parmesan\",\n      \"gorgonzola\"\n    ],\n    \"prices\": {\n      \"S\": 38,\n      \"M\": 48,\n      \"L\": 58\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"chicken\",\n    \"name\": \"Chicken & Cream Cheese\",\n    \"ingredients\": [\n      \"chicken\",\n      \"cream cheese\",\n      \"corn\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 34,\n      \"M\": 44,\n      \"L\": 54\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"nona-special\",\n    \"name\": \"Nona Special\",\n    \"ingredients\": [\n      \"mushroom\",\n      \"bell pepper\",\n      \"zucchini\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 36,\n      \"M\": 46,\n      \"L\": 56\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"banana\",\n    \"name\": \"Banana Cinnamon\",\n    \"ingredients\": [\n      \"banana\",\n      \"cinnamon\",\n      \"sugar\",\n      \"condensed milk\"\n    ],\n    \"prices\": {\n      \"S\": 28,\n      \"M\": 38,\n      \"L\": 48\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  }\n]",
+            "tokens": 751
+          }
+        ],
+        "correct": true
+      },
+      "mcp:compact": {
+        "answer": "Pepperoni is sold out today. Every other pizza on the menu is available.",
+        "tokens": 2948,
+        "input_tokens": 2806,
+        "output_tokens": 142,
+        "tool_output_tokens": 1049,
+        "calls": 2,
+        "seconds": 3.4,
+        "trace": [
+          {
+            "call": "list_menu({})",
+            "output": "[{\"id\":\"margherita\",\"name\":\"Margherita\",\"ingredients\":[\"mozzarella\",\"tomato\",\"basil\"],\"prices\":{\"S\":32,\"M\":42,\"L\":52},\"vegetarian\":true,\"available\":true},{\"id\":\"pepperoni\",\"name\":\"Pepperoni\",\"ingredients\":[\"pepperoni\",\"onion\",\"mozzarella\"],\"prices\":{\"S\":30,\"M\":40,\"L\":50},\"vegetarian\":false,\"available\":false},{\"id\":\"ham-egg\",\"name\":\"Ham & Egg\",\"ingredients\":[\"ham\",\"egg\",\"onion\",\"peas\",\"mozzarella\"],\"prices\":{\"S\":35,\"M\":45,\"L\":55},\"vegetarian\":false,\"available\":true},{\"id\":\"four-cheese\",\"name\":\"Four Cheese\",\"ingredients\":[\"mozzarella\",\"provolone\",\"parmesan\",\"gorgonzola\"],\"prices\":{\"S\":38,\"M\":48,\"L\":58},\"vegetarian\":true,\"available\":true},{\"id\":\"chicken\",\"name\":\"Chicken & Cream Cheese\",\"ingredients\":[\"chicken\",\"cream cheese\",\"corn\",\"mozzarella\"],\"prices\":{\"S\":34,\"M\":44,\"L\":54},\"vegetarian\":false,\"available\":true},{\"id\":\"nona-special\",\"name\":\"Nona Special\",\"ingredients\":[\"mushroom\",\"bell pepper\",\"zucchini\",\"mozzarella\"],\"prices\":{\"S\":36,\"M\":46,\"L\":56},\"vegetarian\":true,\"available\":true},{\"id\":\"banana\",\"name\":\"Banana Cinnamon\",\"ingredients\":[\"banana\",\"cinnamon\",\"sugar\",\"condensed milk\"],\"prices\":{\"S\":28,\"M\":38,\"L\":48},\"vegetarian\":true,\"available\":true}]",
+            "tokens": 563
+          },
+          {
+            "call": "list_menu({\"available\": true})",
+            "output": "[{\"id\":\"margherita\",\"name\":\"Margherita\",\"ingredients\":[\"mozzarella\",\"tomato\",\"basil\"],\"prices\":{\"S\":32,\"M\":42,\"L\":52},\"vegetarian\":true,\"available\":true},{\"id\":\"ham-egg\",\"name\":\"Ham & Egg\",\"ingredients\":[\"ham\",\"egg\",\"onion\",\"peas\",\"mozzarella\"],\"prices\":{\"S\":35,\"M\":45,\"L\":55},\"vegetarian\":false,\"available\":true},{\"id\":\"four-cheese\",\"name\":\"Four Cheese\",\"ingredients\":[\"mozzarella\",\"provolone\",\"parmesan\",\"gorgonzola\"],\"prices\":{\"S\":38,\"M\":48,\"L\":58},\"vegetarian\":true,\"available\":true},{\"id\":\"chicken\",\"name\":\"Chicken & Cream Cheese\",\"ingredients\":[\"chicken\",\"cream cheese\",\"corn\",\"mozzarella\"],\"prices\":{\"S\":34,\"M\":44,\"L\":54},\"vegetarian\":false,\"available\":true},{\"id\":\"nona-special\",\"name\":\"Nona Special\",\"ingredients\":[\"mushroom\",\"bell pepper\",\"zucchini\",\"mozzarella\"],\"prices\":{\"S\":36,\"M\":46,\"L\":56},\"vegetarian\":true,\"available\":true},{\"id\":\"banana\",\"name\":\"Banana Cinnamon\",\"ingredients\":[\"banana\",\"cinnamon\",\"sugar\",\"condensed milk\"],\"prices\":{\"S\":28,\"M\":38,\"L\":48},\"vegetarian\":true,\"available\":true}]",
+            "tokens": 486
+          }
+        ],
+        "correct": true
+      },
+      "mcp:text": {
+        "answer": "Pepperoni is the only pizza sold out today.",
+        "tokens": 2640,
+        "input_tokens": 2519,
+        "output_tokens": 121,
+        "tool_output_tokens": 775,
+        "calls": 2,
+        "seconds": 3.2,
+        "trace": [
+          {
+            "call": "list_menu({})",
+            "output": "🍕 Margherita: S $32.00 | M $42.00 | L $52.00  (🌱 vegetarian)\n   mozzarella, tomato, basil\n🍕 Pepperoni: S $30.00 | M $40.00 | L $50.00  (❌ sold out today)\n   pepperoni, onion, mozzarella\n🍕 Ham & Egg: S $35.00 | M $45.00 | L $55.00\n   ham, egg, onion, peas, mozzarella\n🍕 Four Cheese: S $38.00 | M $48.00 | L $58.00  (🌱 vegetarian)\n   mozzarella, provolone, parmesan, gorgonzola\n🍕 Chicken & Cream Cheese: S $34.00 | M $44.00 | L $54.00\n   chicken, cream cheese, corn, mozzarella\n🍕 Nona Special: S $36.00 | M $46.00 | L $56.00  (🌱 vegetarian)\n   mushroom, bell pepper, zucchini, mozzarella\n🍕 Banana Cinnamon: S $28.00 | M $38.00 | L $48.00  (🌱 vegetarian)\n   banana, cinnamon, sugar, condensed milk",
+            "tokens": 416
+          },
+          {
+            "call": "list_menu({\"available\": true})",
+            "output": "🍕 Margherita: S $32.00 | M $42.00 | L $52.00  (🌱 vegetarian)\n   mozzarella, tomato, basil\n🍕 Ham & Egg: S $35.00 | M $45.00 | L $55.00\n   ham, egg, onion, peas, mozzarella\n🍕 Four Cheese: S $38.00 | M $48.00 | L $58.00  (🌱 vegetarian)\n   mozzarella, provolone, parmesan, gorgonzola\n🍕 Chicken & Cream Cheese: S $34.00 | M $44.00 | L $54.00\n   chicken, cream cheese, corn, mozzarella\n🍕 Nona Special: S $36.00 | M $46.00 | L $56.00  (🌱 vegetarian)\n   mushroom, bell pepper, zucchini, mozzarella\n🍕 Banana Cinnamon: S $28.00 | M $38.00 | L $48.00  (🌱 vegetarian)\n   banana, cinnamon, sugar, condensed milk",
+            "tokens": 359
+          }
+        ],
+        "correct": true
+      }
+    },
+    "Which pizzas are vegetarian?": {
+      "none": {
+        "answer": "I don't have the current menu details in front of me, so I can't say for sure which pizzas are vegetarian. Typically, a plain cheese or Margherita pizza and any veggie-topped pie are meat-free, but please check the menu or ask our staff to confirm, since some sauces and toppings can contain meat products. If you tell me which pizzas you're considering, I can help you work out what to ask about.",
+        "tokens": 295,
+        "input_tokens": 59,
+        "output_tokens": 236,
+        "tool_output_tokens": 0,
+        "calls": 0,
+        "seconds": 2.6,
+        "trace": [],
+        "correct": false
+      },
+      "cli": {
+        "answer": "Vegetarian pizzas, all available now:\n\n- Margherita (S 32, M 42, L 52)\n- Four Cheese (S 38, M 48, L 58)\n- Nona Special, with mushroom, bell pepper and zucchini (S 36, M 46, L 56)\n- Banana Cinnamon, a sweet one (S 28, M 38, L 48)",
+        "tokens": 2098,
+        "input_tokens": 1924,
+        "output_tokens": 174,
+        "tool_output_tokens": 869,
+        "calls": 1,
+        "seconds": 2.8,
+        "trace": [
+          {
+            "call": "pizza menu --json",
+            "output": "[\n  {\n    \"id\": \"margherita\",\n    \"name\": \"Margherita\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"tomato\",\n      \"basil\"\n    ],\n    \"prices\": {\n      \"S\": 32,\n      \"M\": 42,\n      \"L\": 52\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"pepperoni\",\n    \"name\": \"Pepperoni\",\n    \"ingredients\": [\n      \"pepperoni\",\n      \"onion\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 30,\n      \"M\": 40,\n      \"L\": 50\n    },\n    \"vegetarian\": false,\n    \"available\": false\n  },\n  {\n    \"id\": \"ham-egg\",\n    \"name\": \"Ham & Egg\",\n    \"ingredients\": [\n      \"ham\",\n      \"egg\",\n      \"onion\",\n      \"peas\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 35,\n      \"M\": 45,\n      \"L\": 55\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"four-cheese\",\n    \"name\": \"Four Cheese\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"provolone\",\n      \"parmesan\",\n      \"gorgonzola\"\n    ],\n    \"prices\": {\n      \"S\": 38,\n      \"M\": 48,\n      \"L\": 58\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"chicken\",\n    \"name\": \"Chicken & Cream Cheese\",\n    \"ingredients\": [\n      \"chicken\",\n      \"cream cheese\",\n      \"corn\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 34,\n      \"M\": 44,\n      \"L\": 54\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"nona-special\",\n    \"name\": \"Nona Special\",\n    \"ingredients\": [\n      \"mushroom\",\n      \"bell pepper\",\n      \"zucchini\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 36,\n      \"M\": 46,\n      \"L\": 56\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"banana\",\n    \"name\": \"Banana Cinnamon\",\n    \"ingredients\": [\n      \"banana\",\n      \"cinnamon\",\n      \"sugar\",\n      \"condensed milk\"\n    ],\n    \"prices\": {\n      \"S\": 28,\n      \"M\": 38,\n      \"L\": 48\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  }\n]",
+            "tokens": 869
+          }
+        ],
+        "correct": true
+      },
+      "mcp": {
+        "answer": "We have four vegetarian pizzas, and all are available today. Prices are for S, M and L.\n\n- Margherita (mozzarella, tomato, basil): 32 / 42 / 52\n- Four Cheese (mozzarella, provolone, parmesan, gorgonzola): 38 / 48 / 58\n- Nona Special (mushroom, bell pepper, zucchini, mozzarella): 36 / 46 / 56\n- Banana Cinnamon (banana, cinnamon, sugar, condensed milk): 28 / 38 / 48",
+        "tokens": 2375,
+        "input_tokens": 2139,
+        "output_tokens": 236,
+        "tool_output_tokens": 494,
+        "calls": 1,
+        "seconds": 4.3,
+        "trace": [
+          {
+            "call": "list_menu({\"vegetarian\": true})",
+            "output": "[\n  {\n    \"id\": \"margherita\",\n    \"name\": \"Margherita\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"tomato\",\n      \"basil\"\n    ],\n    \"prices\": {\n      \"S\": 32,\n      \"M\": 42,\n      \"L\": 52\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"four-cheese\",\n    \"name\": \"Four Cheese\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"provolone\",\n      \"parmesan\",\n      \"gorgonzola\"\n    ],\n    \"prices\": {\n      \"S\": 38,\n      \"M\": 48,\n      \"L\": 58\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"nona-special\",\n    \"name\": \"Nona Special\",\n    \"ingredients\": [\n      \"mushroom\",\n      \"bell pepper\",\n      \"zucchini\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 36,\n      \"M\": 46,\n      \"L\": 56\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"banana\",\n    \"name\": \"Banana Cinnamon\",\n    \"ingredients\": [\n      \"banana\",\n      \"cinnamon\",\n      \"sugar\",\n      \"condensed milk\"\n    ],\n    \"prices\": {\n      \"S\": 28,\n      \"M\": 38,\n      \"L\": 48\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  }\n]",
+            "tokens": 494
+          }
+        ],
+        "correct": true
+      },
+      "mcp:compact": {
+        "answer": "Our vegetarian pizzas are:\n\n- Margherita (mozzarella, tomato, basil): S 32, M 42, L 52\n- Four Cheese (mozzarella, provolone, parmesan, gorgonzola): S 38, M 48, L 58\n- Nona Special (mushroom, bell pepper, zucchini, mozzarella): S 36, M 46, L 56\n- Banana Cinnamon (banana, cinnamon, sugar, condensed milk): S 28, M 38, L 48\n\nAll four are available today.",
+        "tokens": 2195,
+        "input_tokens": 1965,
+        "output_tokens": 230,
+        "tool_output_tokens": 320,
+        "calls": 1,
+        "seconds": 4.0,
+        "trace": [
+          {
+            "call": "list_menu({\"vegetarian\": true})",
+            "output": "[{\"id\":\"margherita\",\"name\":\"Margherita\",\"ingredients\":[\"mozzarella\",\"tomato\",\"basil\"],\"prices\":{\"S\":32,\"M\":42,\"L\":52},\"vegetarian\":true,\"available\":true},{\"id\":\"four-cheese\",\"name\":\"Four Cheese\",\"ingredients\":[\"mozzarella\",\"provolone\",\"parmesan\",\"gorgonzola\"],\"prices\":{\"S\":38,\"M\":48,\"L\":58},\"vegetarian\":true,\"available\":true},{\"id\":\"nona-special\",\"name\":\"Nona Special\",\"ingredients\":[\"mushroom\",\"bell pepper\",\"zucchini\",\"mozzarella\"],\"prices\":{\"S\":36,\"M\":46,\"L\":56},\"vegetarian\":true,\"available\":true},{\"id\":\"banana\",\"name\":\"Banana Cinnamon\",\"ingredients\":[\"banana\",\"cinnamon\",\"sugar\",\"condensed milk\"],\"prices\":{\"S\":28,\"M\":38,\"L\":48},\"vegetarian\":true,\"available\":true}]",
+            "tokens": 320
+          }
+        ],
+        "correct": true
+      },
+      "mcp:text": {
+        "answer": "Our vegetarian pizzas are:\n\n- Margherita: mozzarella, tomato, basil. S $32, M $42, L $52.\n- Four Cheese: mozzarella, provolone, parmesan, gorgonzola. S $38, M $48, L $58.\n- Nona Special: mushroom, bell pepper, zucchini, mozzarella. S $36, M $46, L $56.\n- Banana Cinnamon: banana, cinnamon, sugar, condensed milk. S $28, M $38, L $48.",
+        "tokens": 2123,
+        "input_tokens": 1896,
+        "output_tokens": 227,
+        "tool_output_tokens": 251,
+        "calls": 1,
+        "seconds": 4.0,
+        "trace": [
+          {
+            "call": "list_menu({\"vegetarian\": true})",
+            "output": "🍕 Margherita: S $32.00 | M $42.00 | L $52.00  (🌱 vegetarian)\n   mozzarella, tomato, basil\n🍕 Four Cheese: S $38.00 | M $48.00 | L $58.00  (🌱 vegetarian)\n   mozzarella, provolone, parmesan, gorgonzola\n🍕 Nona Special: S $36.00 | M $46.00 | L $56.00  (🌱 vegetarian)\n   mushroom, bell pepper, zucchini, mozzarella\n🍕 Banana Cinnamon: S $28.00 | M $38.00 | L $48.00  (🌱 vegetarian)\n   banana, cinnamon, sugar, condensed milk",
+            "tokens": 251
+          }
+        ],
+        "correct": true
+      }
+    },
+    "Which pizza has mushroom and bell pepper?": {
+      "none": {
+        "answer": "I don't have our menu details in front of me, so I can't say which pizza has both mushroom and bell pepper without guessing. Please check the menu's ingredient lists or ask the staff at the counter. They can also tell you whether you can add those toppings to any pizza.",
+        "tokens": 280,
+        "input_tokens": 63,
+        "output_tokens": 217,
+        "tool_output_tokens": 0,
+        "calls": 0,
+        "seconds": 2.5,
+        "trace": [],
+        "correct": false
+      },
+      "cli": {
+        "answer": "The Nona Special has both mushroom and bell pepper. It also has zucchini and mozzarella, and it's vegetarian. It's available now. Prices are 36 for S, 46 for M and 56 for L.",
+        "tokens": 2053,
+        "input_tokens": 1932,
+        "output_tokens": 121,
+        "tool_output_tokens": 869,
+        "calls": 1,
+        "seconds": 2.6,
+        "trace": [
+          {
+            "call": "pizza menu --json",
+            "output": "[\n  {\n    \"id\": \"margherita\",\n    \"name\": \"Margherita\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"tomato\",\n      \"basil\"\n    ],\n    \"prices\": {\n      \"S\": 32,\n      \"M\": 42,\n      \"L\": 52\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"pepperoni\",\n    \"name\": \"Pepperoni\",\n    \"ingredients\": [\n      \"pepperoni\",\n      \"onion\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 30,\n      \"M\": 40,\n      \"L\": 50\n    },\n    \"vegetarian\": false,\n    \"available\": false\n  },\n  {\n    \"id\": \"ham-egg\",\n    \"name\": \"Ham & Egg\",\n    \"ingredients\": [\n      \"ham\",\n      \"egg\",\n      \"onion\",\n      \"peas\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 35,\n      \"M\": 45,\n      \"L\": 55\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"four-cheese\",\n    \"name\": \"Four Cheese\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"provolone\",\n      \"parmesan\",\n      \"gorgonzola\"\n    ],\n    \"prices\": {\n      \"S\": 38,\n      \"M\": 48,\n      \"L\": 58\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"chicken\",\n    \"name\": \"Chicken & Cream Cheese\",\n    \"ingredients\": [\n      \"chicken\",\n      \"cream cheese\",\n      \"corn\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 34,\n      \"M\": 44,\n      \"L\": 54\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"nona-special\",\n    \"name\": \"Nona Special\",\n    \"ingredients\": [\n      \"mushroom\",\n      \"bell pepper\",\n      \"zucchini\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 36,\n      \"M\": 46,\n      \"L\": 56\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"banana\",\n    \"name\": \"Banana Cinnamon\",\n    \"ingredients\": [\n      \"banana\",\n      \"cinnamon\",\n      \"sugar\",\n      \"condensed milk\"\n    ],\n    \"prices\": {\n      \"S\": 28,\n      \"M\": 38,\n      \"L\": 48\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  }\n]",
+            "tokens": 869
+          }
+        ],
+        "correct": true
+      },
+      "mcp": {
+        "answer": "The Nona Special has both. It also comes with zucchini and mozzarella. It's vegetarian and available today.\n\nPrices: S 36, M 46, L 56.",
+        "tokens": 1913,
+        "input_tokens": 1794,
+        "output_tokens": 119,
+        "tool_output_tokens": 129,
+        "calls": 1,
+        "seconds": 3.1,
+        "trace": [
+          {
+            "call": "search_pizzas({\"terms\": [\"mushroom\", \"bell pepper\"]})",
+            "output": "[\n  {\n    \"id\": \"nona-special\",\n    \"name\": \"Nona Special\",\n    \"ingredients\": [\n      \"mushroom\",\n      \"bell pepper\",\n      \"zucchini\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 36,\n      \"M\": 46,\n      \"L\": 56\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  }\n]",
+            "tokens": 129
+          }
+        ],
+        "correct": true
+      },
+      "mcp:compact": {
+        "answer": "The Nona Special has both. It also has zucchini and mozzarella, it's vegetarian, and it's available today. Prices are S 36, M 46, L 56.",
+        "tokens": 1868,
+        "input_tokens": 1749,
+        "output_tokens": 119,
+        "tool_output_tokens": 84,
+        "calls": 1,
+        "seconds": 2.8,
+        "trace": [
+          {
+            "call": "search_pizzas({\"terms\": [\"mushroom\", \"bell pepper\"]})",
+            "output": "[{\"id\":\"nona-special\",\"name\":\"Nona Special\",\"ingredients\":[\"mushroom\",\"bell pepper\",\"zucchini\",\"mozzarella\"],\"prices\":{\"S\":36,\"M\":46,\"L\":56},\"vegetarian\":true,\"available\":true}]",
+            "tokens": 84
+          }
+        ],
+        "correct": true
+      },
+      "mcp:text": {
+        "answer": "Nona Special has both mushroom and bell pepper. It also has zucchini and mozzarella, and it's vegetarian.\n\nPrices: S $36, M $46, L $56.",
+        "tokens": 1853,
+        "input_tokens": 1729,
+        "output_tokens": 124,
+        "tool_output_tokens": 64,
+        "calls": 1,
+        "seconds": 2.8,
+        "trace": [
+          {
+            "call": "search_pizzas({\"terms\": [\"mushroom\", \"bell pepper\"]})",
+            "output": "🍕 Nona Special: S $36.00 | M $46.00 | L $56.00  (🌱 vegetarian)\n   mushroom, bell pepper, zucchini, mozzarella",
+            "tokens": 64
+          }
+        ],
+        "correct": true
+      }
+    },
+    "What is the cheapest small pizza?": {
+      "none": {
+        "answer": "I don't have our current menu or prices in front of me, so I can't say for sure which small pizza is cheapest. Usually a basic cheese or plain pizza is the lowest-priced option, but please check the menu or ask the staff to confirm the exact price.",
+        "tokens": 210,
+        "input_tokens": 58,
+        "output_tokens": 152,
+        "tool_output_tokens": 0,
+        "calls": 0,
+        "seconds": 2.0,
+        "trace": [],
+        "correct": false
+      },
+      "cli": {
+        "answer": "The cheapest small pizza is the Banana Cinnamon at 28. It's a sweet pizza.\n\nIf you want a savory one, the cheapest available is the Margherita at 32. Pepperoni is cheaper at 30, but it's currently unavailable.",
+        "tokens": 2058,
+        "input_tokens": 1922,
+        "output_tokens": 136,
+        "tool_output_tokens": 869,
+        "calls": 1,
+        "seconds": 2.9,
+        "trace": [
+          {
+            "call": "pizza menu --json",
+            "output": "[\n  {\n    \"id\": \"margherita\",\n    \"name\": \"Margherita\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"tomato\",\n      \"basil\"\n    ],\n    \"prices\": {\n      \"S\": 32,\n      \"M\": 42,\n      \"L\": 52\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"pepperoni\",\n    \"name\": \"Pepperoni\",\n    \"ingredients\": [\n      \"pepperoni\",\n      \"onion\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 30,\n      \"M\": 40,\n      \"L\": 50\n    },\n    \"vegetarian\": false,\n    \"available\": false\n  },\n  {\n    \"id\": \"ham-egg\",\n    \"name\": \"Ham & Egg\",\n    \"ingredients\": [\n      \"ham\",\n      \"egg\",\n      \"onion\",\n      \"peas\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 35,\n      \"M\": 45,\n      \"L\": 55\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"four-cheese\",\n    \"name\": \"Four Cheese\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"provolone\",\n      \"parmesan\",\n      \"gorgonzola\"\n    ],\n    \"prices\": {\n      \"S\": 38,\n      \"M\": 48,\n      \"L\": 58\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"chicken\",\n    \"name\": \"Chicken & Cream Cheese\",\n    \"ingredients\": [\n      \"chicken\",\n      \"cream cheese\",\n      \"corn\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 34,\n      \"M\": 44,\n      \"L\": 54\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"nona-special\",\n    \"name\": \"Nona Special\",\n    \"ingredients\": [\n      \"mushroom\",\n      \"bell pepper\",\n      \"zucchini\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 36,\n      \"M\": 46,\n      \"L\": 56\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"banana\",\n    \"name\": \"Banana Cinnamon\",\n    \"ingredients\": [\n      \"banana\",\n      \"cinnamon\",\n      \"sugar\",\n      \"condensed milk\"\n    ],\n    \"prices\": {\n      \"S\": 28,\n      \"M\": 38,\n      \"L\": 48\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  }\n]",
+            "tokens": 869
+          }
+        ],
+        "correct": true
+      },
+      "mcp": {
+        "answer": "The cheapest small pizza available today is the Banana Cinnamon at 28. It's a sweet pizza.\n\nIf you want a savory one, the cheapest is the Margherita at 32. Pepperoni is cheaper at 30, but it isn't available today.",
+        "tokens": 2599,
+        "input_tokens": 2487,
+        "output_tokens": 112,
+        "tool_output_tokens": 869,
+        "calls": 1,
+        "seconds": 2.6,
+        "trace": [
+          {
+            "call": "list_menu({})",
+            "output": "[\n  {\n    \"id\": \"margherita\",\n    \"name\": \"Margherita\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"tomato\",\n      \"basil\"\n    ],\n    \"prices\": {\n      \"S\": 32,\n      \"M\": 42,\n      \"L\": 52\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"pepperoni\",\n    \"name\": \"Pepperoni\",\n    \"ingredients\": [\n      \"pepperoni\",\n      \"onion\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 30,\n      \"M\": 40,\n      \"L\": 50\n    },\n    \"vegetarian\": false,\n    \"available\": false\n  },\n  {\n    \"id\": \"ham-egg\",\n    \"name\": \"Ham & Egg\",\n    \"ingredients\": [\n      \"ham\",\n      \"egg\",\n      \"onion\",\n      \"peas\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 35,\n      \"M\": 45,\n      \"L\": 55\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"four-cheese\",\n    \"name\": \"Four Cheese\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"provolone\",\n      \"parmesan\",\n      \"gorgonzola\"\n    ],\n    \"prices\": {\n      \"S\": 38,\n      \"M\": 48,\n      \"L\": 58\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"chicken\",\n    \"name\": \"Chicken & Cream Cheese\",\n    \"ingredients\": [\n      \"chicken\",\n      \"cream cheese\",\n      \"corn\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 34,\n      \"M\": 44,\n      \"L\": 54\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"nona-special\",\n    \"name\": \"Nona Special\",\n    \"ingredients\": [\n      \"mushroom\",\n      \"bell pepper\",\n      \"zucchini\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 36,\n      \"M\": 46,\n      \"L\": 56\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"banana\",\n    \"name\": \"Banana Cinnamon\",\n    \"ingredients\": [\n      \"banana\",\n      \"cinnamon\",\n      \"sugar\",\n      \"condensed milk\"\n    ],\n    \"prices\": {\n      \"S\": 28,\n      \"M\": 38,\n      \"L\": 48\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  }\n]",
+            "tokens": 869
+          }
+        ],
+        "correct": true
+      },
+      "mcp:compact": {
+        "answer": "The cheapest small pizza available today is the Banana Cinnamon at 28. The Pepperoni is cheaper on the menu at 30 for a small, but it isn't available today. If you want a savory one, the cheapest available is the Margherita at 32.",
+        "tokens": 2292,
+        "input_tokens": 2181,
+        "output_tokens": 111,
+        "tool_output_tokens": 563,
+        "calls": 1,
+        "seconds": 2.5,
+        "trace": [
+          {
+            "call": "list_menu({})",
+            "output": "[{\"id\":\"margherita\",\"name\":\"Margherita\",\"ingredients\":[\"mozzarella\",\"tomato\",\"basil\"],\"prices\":{\"S\":32,\"M\":42,\"L\":52},\"vegetarian\":true,\"available\":true},{\"id\":\"pepperoni\",\"name\":\"Pepperoni\",\"ingredients\":[\"pepperoni\",\"onion\",\"mozzarella\"],\"prices\":{\"S\":30,\"M\":40,\"L\":50},\"vegetarian\":false,\"available\":false},{\"id\":\"ham-egg\",\"name\":\"Ham & Egg\",\"ingredients\":[\"ham\",\"egg\",\"onion\",\"peas\",\"mozzarella\"],\"prices\":{\"S\":35,\"M\":45,\"L\":55},\"vegetarian\":false,\"available\":true},{\"id\":\"four-cheese\",\"name\":\"Four Cheese\",\"ingredients\":[\"mozzarella\",\"provolone\",\"parmesan\",\"gorgonzola\"],\"prices\":{\"S\":38,\"M\":48,\"L\":58},\"vegetarian\":true,\"available\":true},{\"id\":\"chicken\",\"name\":\"Chicken & Cream Cheese\",\"ingredients\":[\"chicken\",\"cream cheese\",\"corn\",\"mozzarella\"],\"prices\":{\"S\":34,\"M\":44,\"L\":54},\"vegetarian\":false,\"available\":true},{\"id\":\"nona-special\",\"name\":\"Nona Special\",\"ingredients\":[\"mushroom\",\"bell pepper\",\"zucchini\",\"mozzarella\"],\"prices\":{\"S\":36,\"M\":46,\"L\":56},\"vegetarian\":true,\"available\":true},{\"id\":\"banana\",\"name\":\"Banana Cinnamon\",\"ingredients\":[\"banana\",\"cinnamon\",\"sugar\",\"condensed milk\"],\"prices\":{\"S\":28,\"M\":38,\"L\":48},\"vegetarian\":true,\"available\":true}]",
+            "tokens": 563
+          }
+        ],
+        "correct": true
+      },
+      "mcp:text": {
+        "answer": "The cheapest small pizza is the Banana Cinnamon at $28.00. It's a sweet pizza with banana, cinnamon, sugar and condensed milk.\n\nIf you want a savory one, the cheapest available is the Margherita at $32.00. Pepperoni is $30.00, but it's sold out today.",
+        "tokens": 2165,
+        "input_tokens": 2034,
+        "output_tokens": 131,
+        "tool_output_tokens": 416,
+        "calls": 1,
+        "seconds": 2.6,
+        "trace": [
+          {
+            "call": "list_menu({})",
+            "output": "🍕 Margherita: S $32.00 | M $42.00 | L $52.00  (🌱 vegetarian)\n   mozzarella, tomato, basil\n🍕 Pepperoni: S $30.00 | M $40.00 | L $50.00  (❌ sold out today)\n   pepperoni, onion, mozzarella\n🍕 Ham & Egg: S $35.00 | M $45.00 | L $55.00\n   ham, egg, onion, peas, mozzarella\n🍕 Four Cheese: S $38.00 | M $48.00 | L $58.00  (🌱 vegetarian)\n   mozzarella, provolone, parmesan, gorgonzola\n🍕 Chicken & Cream Cheese: S $34.00 | M $44.00 | L $54.00\n   chicken, cream cheese, corn, mozzarella\n🍕 Nona Special: S $36.00 | M $46.00 | L $56.00  (🌱 vegetarian)\n   mushroom, bell pepper, zucchini, mozzarella\n🍕 Banana Cinnamon: S $28.00 | M $38.00 | L $48.00  (🌱 vegetarian)\n   banana, cinnamon, sugar, condensed milk",
+            "tokens": 416
+          }
+        ],
+        "correct": true
+      }
+    },
+    "How much is a medium Ham & Egg plus a large Four Cheese?": {
+      "none": {
+        "answer": "I don't have our price list in front of me, so I can't give you an accurate total. If you can check the menu or tell me the prices for a medium Ham & Egg and a large Four Cheese, I'll add them up for you. Or I can point you to the staff who can confirm the price.",
+        "tokens": 236,
+        "input_tokens": 70,
+        "output_tokens": 166,
+        "tool_output_tokens": 0,
+        "calls": 0,
+        "seconds": 2.2,
+        "trace": [],
+        "correct": false
+      },
+      "cli": {
+        "answer": "Medium Ham & Egg (45) plus large Four Cheese (58) comes to 103. The menu doesn't list a currency.",
+        "tokens": 2358,
+        "input_tokens": 2218,
+        "output_tokens": 140,
+        "tool_output_tokens": 1045,
+        "calls": 2,
+        "seconds": 5.9,
+        "trace": [
+          {
+            "call": "pizza --help",
+            "output": "usage: pizza [-h] COMMAND ...\n\n🍕 Nona Byte Pizza CLI. Check the menu, ingredients and prices.\n\npositional arguments:\n  COMMAND\n    menu      list the pizzas\n    search    search by name or ingredient\n    price     show the price of a pizza\n\noptions:\n  -h, --help  show this help message and exit\n\nExamples:\n  pizza menu\n  pizza menu --vegetarian\n  pizza search mushroom\n  pizza price margherita --size L\n  pizza price four cheese --json",
+            "tokens": 176
+          },
+          {
+            "call": "pizza menu --json",
+            "output": "[\n  {\n    \"id\": \"margherita\",\n    \"name\": \"Margherita\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"tomato\",\n      \"basil\"\n    ],\n    \"prices\": {\n      \"S\": 32,\n      \"M\": 42,\n      \"L\": 52\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"pepperoni\",\n    \"name\": \"Pepperoni\",\n    \"ingredients\": [\n      \"pepperoni\",\n      \"onion\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 30,\n      \"M\": 40,\n      \"L\": 50\n    },\n    \"vegetarian\": false,\n    \"available\": false\n  },\n  {\n    \"id\": \"ham-egg\",\n    \"name\": \"Ham & Egg\",\n    \"ingredients\": [\n      \"ham\",\n      \"egg\",\n      \"onion\",\n      \"peas\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 35,\n      \"M\": 45,\n      \"L\": 55\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"four-cheese\",\n    \"name\": \"Four Cheese\",\n    \"ingredients\": [\n      \"mozzarella\",\n      \"provolone\",\n      \"parmesan\",\n      \"gorgonzola\"\n    ],\n    \"prices\": {\n      \"S\": 38,\n      \"M\": 48,\n      \"L\": 58\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"chicken\",\n    \"name\": \"Chicken & Cream Cheese\",\n    \"ingredients\": [\n      \"chicken\",\n      \"cream cheese\",\n      \"corn\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 34,\n      \"M\": 44,\n      \"L\": 54\n    },\n    \"vegetarian\": false,\n    \"available\": true\n  },\n  {\n    \"id\": \"nona-special\",\n    \"name\": \"Nona Special\",\n    \"ingredients\": [\n      \"mushroom\",\n      \"bell pepper\",\n      \"zucchini\",\n      \"mozzarella\"\n    ],\n    \"prices\": {\n      \"S\": 36,\n      \"M\": 46,\n      \"L\": 56\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  },\n  {\n    \"id\": \"banana\",\n    \"name\": \"Banana Cinnamon\",\n    \"ingredients\": [\n      \"banana\",\n      \"cinnamon\",\n      \"sugar\",\n      \"condensed milk\"\n    ],\n    \"prices\": {\n      \"S\": 28,\n      \"M\": 38,\n      \"L\": 48\n    },\n    \"vegetarian\": true,\n    \"available\": true\n  }\n]",
+            "tokens": 869
+          }
+        ],
+        "correct": true
+      },
+      "mcp": {
+        "answer": "The total is 103. A medium Ham & Egg is 45 and a large Four Cheese is 58. Both are available today.",
+        "tokens": 2084,
+        "input_tokens": 1895,
+        "output_tokens": 189,
+        "tool_output_tokens": 81,
+        "calls": 2,
+        "seconds": 3.4,
+        "trace": [
+          {
+            "call": "get_price({\"pizza\": \"Ham & Egg\", \"size\": \"M\"})",
+            "output": "{\n  \"pizza\": \"Ham & Egg\",\n  \"size\": \"M\",\n  \"price\": 45,\n  \"available\": true\n}",
+            "tokens": 41
+          },
+          {
+            "call": "get_price({\"pizza\": \"Four Cheese\", \"size\": \"L\"})",
+            "output": "{\n  \"pizza\": \"Four Cheese\",\n  \"size\": \"L\",\n  \"price\": 58,\n  \"available\": true\n}",
+            "tokens": 40
+          }
+        ],
+        "correct": true
+      },
+      "mcp:compact": {
+        "answer": "The total is 103. That's 45 for the medium Ham & Egg and 58 for the large Four Cheese. Both are available today.",
+        "tokens": 2077,
+        "input_tokens": 1871,
+        "output_tokens": 206,
+        "tool_output_tokens": 57,
+        "calls": 2,
+        "seconds": 3.5,
+        "trace": [
+          {
+            "call": "get_price({\"pizza\": \"Ham & Egg\", \"size\": \"M\"})",
+            "output": "{\"pizza\":\"Ham & Egg\",\"size\":\"M\",\"price\":45,\"available\":true}",
+            "tokens": 29
+          },
+          {
+            "call": "get_price({\"pizza\": \"Four Cheese\", \"size\": \"L\"})",
+            "output": "{\"pizza\":\"Four Cheese\",\"size\":\"L\",\"price\":58,\"available\":true}",
+            "tokens": 28
+          }
+        ],
+        "correct": true
+      },
+      "mcp:text": {
+        "answer": "Together they come to $103.00. That's $45.00 for the medium Ham & Egg and $58.00 for the large Four Cheese.",
+        "tokens": 2035,
+        "input_tokens": 1841,
+        "output_tokens": 194,
+        "tool_output_tokens": 27,
+        "calls": 2,
+        "seconds": 3.4,
+        "trace": [
+          {
+            "call": "get_price({\"pizza\": \"Ham & Egg\", \"size\": \"M\"})",
+            "output": "Ham & Egg (M): $45.00",
+            "tokens": 14
+          },
+          {
+            "call": "get_price({\"pizza\": \"Four Cheese\", \"size\": \"L\"})",
+            "output": "Four Cheese (L): $58.00",
+            "tokens": 13
+          }
+        ],
+        "correct": true
+      }
+    }
+  },
+  "costs": {
+    "cli": 441,
+    "mcp": {
+      "3": 735,
+      "5": 952,
+      "10": 1510,
+      "20": 2573,
+      "30": 3687,
+      "40": 4761,
+      "50": 5855
+    }
+  },
+  "format_lab": {
+    "model": "claude-sonnet-5-5",
+    "calls": [
+      {
+        "call": "list_menu()",
+        "tokens": {
+          "pretty": 869,
+          "compact": 563,
+          "text": 416
+        },
+        "lines": {
+          "pretty": 120,
+          "compact": 1,
+          "text": 14
+        }
+      },
+      {
+        "call": "list_menu(vegetarian=true)",
+        "tokens": {
+          "pretty": 494,
+          "compact": 320,
+          "text": 251
+        },
+        "lines": {
+          "pretty": 69,
+          "compact": 1,
+          "text": 8
+        }
+      },
+      {
+        "call": "list_menu(available=true)",
+        "tokens": {
+          "pretty": 751,
+          "compact": 486,
+          "text": 359
+        },
+        "lines": {
+          "pretty": 104,
+          "compact": 1,
+          "text": 12
+        }
+      },
+      {
+        "call": "search_pizzas(terms=[\"mushroom\"])",
+        "tokens": {
+          "pretty": 129,
+          "compact": 84,
+          "text": 64
+        },
+        "lines": {
+          "pretty": 19,
+          "compact": 1,
+          "text": 2
+        }
+      },
+      {
+        "call": "get_price(pizza=\"Margherita\", size=\"L\")",
+        "tokens": {
+          "pretty": 38,
+          "compact": 26,
+          "text": 11
+        },
+        "lines": {
+          "pretty": 6,
+          "compact": 1,
+          "text": 1
+        }
+      }
+    ],
+    "totals": {
+      "pretty": 2281,
+      "compact": 1479,
+      "text": 1101
+    }
+  }
+}

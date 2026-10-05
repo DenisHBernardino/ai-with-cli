@@ -101,6 +101,17 @@ def cmd_search(args, pizzas):
     show(found, args.json, text)
 
 
+def price_text(data):
+    """Price result as short text. Also used by the MCP server in 'text' format."""
+    if "size" in data:
+        text = f"{data['pizza']} ({data['size']}): {money(data['price'])}"
+    else:
+        text = f"{data['pizza']}: " + " | ".join(f"{s} {money(v)}" for s, v in data["prices"].items())
+    if not data["available"]:
+        text += "  ⚠️ sold out today"
+    return text
+
+
 def cmd_price(args, pizzas):
     name = " ".join(args.pizza)
     p = find_pizza(pizzas, name)
@@ -108,16 +119,10 @@ def cmd_price(args, pizzas):
         error(f"pizza '{name}' not found. Hint: run 'menu' to see the names.")
 
     if args.size:
-        value = p["prices"][args.size]
-        data = {"pizza": p["name"], "size": args.size, "price": value, "available": p["available"]}
-        text = f"{p['name']} ({args.size}): {money(value)}"
+        data = {"pizza": p["name"], "size": args.size, "price": p["prices"][args.size], "available": p["available"]}
     else:
         data = {"pizza": p["name"], "prices": p["prices"], "available": p["available"]}
-        text = f"{p['name']}: " + " | ".join(f"{s} {money(v)}" for s, v in p["prices"].items())
-
-    if not p["available"]:
-        text += "  ⚠️ sold out today"
-    show(data, args.json, text)
+    show(data, args.json, price_text(data))
 
 
 # ---------- CLI setup ----------

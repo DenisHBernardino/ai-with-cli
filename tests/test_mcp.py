@@ -23,5 +23,26 @@ class TestMCPServer(unittest.IsolatedAsyncioTestCase):
         self.assertIn("Hint", result.content[0].text)
 
 
+
+class TestMCPOutputFormats(unittest.IsolatedAsyncioTestCase):
+    async def get_price_text(self, fmt):
+        async with core.mcp_session(fmt) as session:
+            result = await session.call_tool("get_price", {"pizza": "Margherita", "size": "L"})
+        return result.content[0].text
+
+    async def test_pretty_is_indented_json(self):
+        text = await self.get_price_text("pretty")
+        self.assertIn("\n", text)
+        self.assertEqual(json.loads(text)["price"], 52)
+
+    async def test_compact_is_one_line_json(self):
+        text = await self.get_price_text("compact")
+        self.assertNotIn("\n", text)
+        self.assertEqual(json.loads(text)["price"], 52)
+
+    async def test_text_is_plain(self):
+        self.assertEqual(await self.get_price_text("text"), "Margherita (L): $52.00")
+
+
 if __name__ == "__main__":
     unittest.main()

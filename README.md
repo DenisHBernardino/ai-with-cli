@@ -18,7 +18,7 @@ So we ask the same questions in 3 scenarios:
 
 Then we compare correct answers and cost.
 
-![The Arena: same question, three AIs side by side](docs/arena.png)
+![The Arena: same question, three AIs side by side](docs/arena-en.gif)
 
 **Fastest way to see it:** run `python app.py` and open **The Arena** in your browser. 🏟️
 
@@ -77,6 +77,7 @@ flowchart TD
 | `core.py` | Shared logic: talks to the AI, runs tools, counts tokens. |
 | `app.py` + `web/index.html` | 🏟️ The Arena: the web page. |
 | `experiment.py` | The terminal version: all questions, many runs, a score table. |
+| `format_lab.py` + `formats.py` | 📦 The output format lab: same data in 3 formats. |
 | `.env.example` | Template for your `.env` file with the API key. |
 | `data.json` | The menu (our "database"). |
 | `questions.json` | The test questions and the right answers. |
@@ -240,6 +241,80 @@ Type these in the Arena. They need several steps, so you see the AI really explo
 
 ---
 
+## 📦 The output format lab
+
+In our first runs, MCP spent more tokens than the CLI. The traces suggested a reason: the CLI answers with short text, and the MCP tools answered with pretty JSON. But the totals mixed many things: tool output size, the length of the AI's own answer, and the number of calls.
+
+So the lab separates them.
+
+**Part 1: isolated test.** The same 5 tool calls, the same MCP server, the same data. Only the output format changes. No AI answer is generated: we only count tokens with the API. **The format is the only variable.**
+
+| Format | What the AI receives |
+|---|---|
+| Pretty JSON | JSON with line breaks and indentation |
+| Compact JSON | The same JSON, with no spaces |
+| Plain text | Short text, exactly what the CLI prints |
+
+**Part 2: end-to-end test.** The 6 test questions answered by the AI, with MCP in each format, plus the CLI. Tokens are split into three numbers:
+
+- **Tool output:** only what the tools sent back, counted once each.
+- **AI read:** everything the AI read (question, tool descriptions, tool outputs and history).
+- **AI wrote:** everything the AI wrote (its answer and its tool calls).
+
+Results are shown **per model**, never averaged across models.
+
+```bash
+python format_lab.py                          # part 1 only (just token counting)
+python format_lab.py --e2e --runs 3           # part 1 + part 2
+python format_lab.py --e2e --models claude-sonnet-5-5 claude-haiku-4-5
+python format_lab.py --e2e --save             # also saves runs/format_lab.json
+```
+
+In the Arena you can see it too:
+
+- The **"MCP tools answer in"** switch changes the format of the MCP column.
+- Each column shows **📦 tokens of tool output**, separate from the total.
+- The **output format lab** section shows part 1 with bars.
+
+### Our results
+
+Model `claude-sonnet-5-5`, 6 questions, 3 runs per question, per setup.
+
+**Part 1: isolated (format is the only variable)**
+
+| Format | Tool output tokens (5 calls) | vs pretty JSON |
+|---|---|---|
+| Pretty JSON | 2,281 | 0% |
+| Compact JSON | 1,479 | -35% |
+| Plain text | 1,101 | -52% |
+
+**Part 2: end-to-end (averages per run of all 6 questions)**
+
+| Setup | Correct | Tool calls | Tool output | AI read | AI wrote | Total |
+|---|---|---|---|---|---|---|
+| CLI* | 6.0/6 | 7.7 | 4,541 | 11,630 | 825 | 12,455 (-13%) |
+| MCP, Pretty JSON | 6.0/6 | 8.0 | 3,231 | 13,384 | 939 | 14,323 (0%) |
+| MCP, Compact JSON | 6.0/6 | 8.0 | 2,099 | 12,252 | 881 | 13,133 (-8%) |
+| MCP, Plain text | 6.0/6 | 8.0 | 1,544 | 11,696 | 894 | 12,589 (-12%) |
+
+**What we learned**
+
+1. **The format alone matters a lot.** Same data: 35% fewer tokens as compact JSON, 52% fewer as plain text.
+2. **Shorter formats didn't hurt accuracy.** Every setup got 18 out of 18 right.
+3. **End to end, the gain is smaller (8% to 12%).** Tool output is only about a quarter of what the AI reads. The rest is the system prompt, the tool descriptions and the history, which is sent again on every round.
+4. **With plain text, MCP almost ties with the CLI** (12,589 vs 12,455 tokens).
+5. **The AI copies the examples in your tool description.** The CLI returned more tool output (4,541 vs 1,544). The traces showed why: the CLI tool description had `menu --json` as an example, and the AI ran `pizza menu --json` in most questions, getting pretty JSON back. It read `--help` only once. We removed `--json` from the example.
+6. **The format changes the answer, not only the cost.** With JSON, the AI said "52", because the JSON has no currency. With text, it said "$52.00". The AI repeats what it sees.
+7. **Our first number was too high.** One question, one run showed MCP costing about 40% more. With 6 questions and 3 runs, the gap with pretty JSON is 13%.
+
+\* *This run used the old CLI description with `menu --json` as an example. Run `python format_lab.py --e2e` again to see the CLI with plain text.*
+
+*Limits: one model, a small menu and easy questions. Try other models with `--models`.*
+
+**What it does not measure:** whether a format makes the AI understand the data better or worse in harder tasks. That's why part 2 also shows correct answers.
+
+---
+
 ## ✨ What makes a tool good for AI
 
 This works for both CLI and MCP:
@@ -247,7 +322,7 @@ This works for both CLI and MCP:
 | Detail | In the CLI | In the MCP |
 |---|---|---|
 | Explains how to use it | `--help` with examples | Clear description for each tool |
-| Output easy to read | `--json` | Returns JSON |
+| Output easy to read | Short text (`--json` when needed) | Short text or compact JSON |
 | Error with a hint | `Hint: run 'menu'` | `Hint: use list_menu` |
 | Can't break anything | Read-only + allowed commands | Read-only |
 
@@ -271,23 +346,11 @@ Further reading:
 
 1. Remove the examples from `--help`. Does the CLI AI make more mistakes?
 2. Delete the MCP tool descriptions. What changes?
-3. Make the MCP tools return only the fields needed (or compact JSON). Does MCP get cheaper than the CLI?
+3. Add a 4th format to `formats.py` that returns only the fields needed. Does it beat plain text?
 4. Open `core.py` and change the fake tool descriptions. Does the slider change?
 5. Add a `pizza combo` command and a `combo` tool with a discount.
 6. Set Pepperoni `available` to `true` and run it again.
 
----
-
-## 🎥 Record a GIF for your README or LinkedIn
-
-1. Run `python app.py` and click a question.
-2. Record the screen for about 15 seconds:
-   - Windows: [ScreenToGif](https://www.screentogif.com/)
-   - Mac: [Kap](https://getkap.co/)
-   - Linux: [Peek](https://github.com/phw/peek)
-3. Save it as `docs/arena.gif` and use it at the top of this README instead of `docs/arena.png`.
-
----
 
 ## 📄 License
 

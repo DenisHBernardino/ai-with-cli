@@ -135,6 +135,17 @@
   #costText { font-size: 1.15rem; margin: 18px 0 4px; }
   .cost .note { margin-top: 8px; }
 
+  .fmt-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-top: 14px; font-size: .95rem; }
+  .seg { display: inline-flex; background: var(--cheese); border-radius: 999px; padding: 4px; gap: 4px; flex-wrap: wrap; }
+  .seg button { font: inherit; font-size: .9rem; border: 0; background: transparent; color: var(--text); border-radius: 999px; padding: 6px 14px; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: var(--basil); color: #FFF9EC; font-weight: bold; }
+  .lab-bars { margin-top: 18px; display: grid; grid-template-columns: 160px 1fr; gap: 10px 14px; align-items: center; }
+  .bar.fmt { background: var(--basil); }
+  .bar.fmt.best { background: var(--tomato); }
+  table.calls { border-collapse: collapse; width: 100%; font-size: .88rem; margin-top: 10px; }
+  .table-wrap { overflow-x: auto; }
+  table.calls th, table.calls td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--kraft-dark); white-space: nowrap; }
+  table.calls td:first-child { font-family: Consolas, "Courier New", monospace; }
   footer { margin-top: 32px; font-size: .9rem; color: var(--ink-soft); }
   footer a { color: inherit; }
 
@@ -174,6 +185,10 @@
       <input id="question" type="text" placeholder="e.g. How much is a large Margherita?" aria-label="Your question">
       <button id="go">Ask all three</button>
     </div>
+    <div class="fmt-row">
+      <span>MCP tools answer in:</span>
+      <div class="seg" id="fmtSeg" role="group" aria-label="MCP output format"></div>
+    </div>
   </section>
 
   <section class="arena" id="arena"></section>
@@ -194,6 +209,18 @@
     <p class="note">Real token counts from the API. Only 3 MCP tools are real; the others are fake pizza-shop tools, just counted, never run. The CLI may also spend one extra call reading <code>--help</code>.</p>
   </section>
 
+  <section class="cost" id="lab">
+    <h2>The output format lab</h2>
+    <p class="sub">Same 5 tool calls, same MCP server, same data. Only the format of the answer changes.</p>
+    <div class="lab-bars" id="labBars"></div>
+    <p id="labText">Counting real tokens…</p>
+    <details>
+      <summary>See every call</summary>
+      <div class="table-wrap"><table class="calls" id="labTable"></table></div>
+    </details>
+    <p class="note">Real token counts from the API. No AI answer is generated here, so the format is the only variable. For end-to-end numbers with real answers, run <code>python format_lab.py --e2e</code>.</p>
+  </section>
+
   <footer>
     Nona Byte Pizza is fake, so the AI can't know the menu from memory.
     Code: <a href="https://github.com/DenisHBernardino/ai-with-cli">github.com/DenisHBernardino/ai-with-cli</a>
@@ -211,6 +238,7 @@ const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const score = { none: [0, 0], cli: [0, 0], mcp: [0, 0] };
 let status = null;
 let costs = null;
+let fmt = "pretty";
 
 const $ = (sel) => document.querySelector(sel);
 const sleep = (ms) => new Promise((r) => setTimeout(r, REDUCED ? 0 : ms));
@@ -275,10 +303,31 @@ async function init() {
     $("#question").placeholder = "Replay mode: pick a test question above";
   }
 
+  for (const f of status.formats) {
+    const b = el("button", "", f.label);
+    b.setAttribute("aria-pressed", f.id === fmt);
+    b.onclick = () => {
+      fmt = f.id;
+      document.querySelectorAll("#fmtSeg button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+      updateMcpTitle();
+    };
+    $("#fmtSeg").append(b);
+  }
+  updateMcpTitle();
+
   $("#go").onclick = askAll;
   $("#question").addEventListener("keydown", (e) => { if (e.key === "Enter") askAll(); });
   $("#tools").addEventListener("input", drawCosts);
   loadCosts();
+  loadLab();
+}
+
+function fmtLabel(id) {
+  return (status.formats.find((f) => f.id === id) || {}).label || id;
+}
+
+function updateMcpTitle() {
+  document.querySelector('.col[data-mode="mcp"] .col-head p').textContent = `Calls MCP tools (${fmtLabel(fmt)})`;
 }
 
 // ---------- the arena ----------
@@ -308,7 +357,7 @@ async function askOne(question, mode) {
     const res = await fetch("/api/ask", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ question, mode }),
+      body: JSON.stringify({ question, mode, fmt: mode === "mcp" ? fmt : undefined }),
     });
     data = await res.json();
     if (!res.ok) throw new Error(data.error || "Request failed");
@@ -330,7 +379,8 @@ async function askOne(question, mode) {
     if (step.output.startsWith("Error")) box.append(el("span", "tag", "🔁 Got an error, will fix it"));
     const details = el("details");
     const lines = step.output.split("\n").length;
-    details.append(el("summary", "", `output (${lines} line${lines > 1 ? "s" : ""})`), el("pre", "", step.output));
+    const tok = step.tokens != null ? `, ${step.tokens.toLocaleString("en-US")} tokens` : "";
+    details.append(el("summary", "", `output (${lines} line${lines > 1 ? "s" : ""}${tok})`), el("pre", "", step.output));
     box.append(details);
     await sleep(350);
   }
@@ -351,6 +401,9 @@ async function askOne(question, mode) {
     el("span", "", `🔧 ${data.calls} tool call${data.calls === 1 ? "" : "s"}`),
     el("span", "", `⏱️ ${data.seconds}s`)
   );
+  if (data.tool_output_tokens != null && data.calls > 0) {
+    stats.append(el("span", "", `📦 ${data.tool_output_tokens.toLocaleString("en-US")} tokens of tool output`));
+  }
 
   if (data.correct !== null && data.correct !== undefined) {
     score[mode][1] += 1;
@@ -393,6 +446,51 @@ function setBar(bar, value, max) {
   // the longest bar uses 75% of the row, the rest is room for the number
   bar.style.width = Math.max(1, (value / max) * 75) + "%";
   bar.nextElementSibling.textContent = value.toLocaleString("en-US") + " tokens";
+}
+
+// ---------- the output format lab ----------
+
+async function loadLab() {
+  try {
+    const res = await fetch("/api/format-lab");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    drawLab(data);
+  } catch (err) {
+    $("#labText").textContent = "⚠️ " + err.message;
+  }
+}
+
+function drawLab(lab) {
+  const ids = Object.keys(lab.totals);
+  const base = lab.totals.pretty;
+  const max = Math.max(...Object.values(lab.totals));
+  const min = Math.min(...Object.values(lab.totals));
+  const bars = $("#labBars");
+  bars.replaceChildren();
+  for (const id of ids) {
+    const v = lab.totals[id];
+    const row = el("div", "bar-row");
+    const bar = el("div", "bar fmt" + (v === min ? " best" : ""));
+    bar.style.width = Math.max(1, (v / max) * 70) + "%";
+    const diff = id === "pretty" ? "" : `  (${Math.round(((v - base) / base) * 100)}%)`;
+    row.append(bar, el("span", "val", v.toLocaleString("en-US") + " tokens" + diff));
+    bars.append(el("strong", "", fmtLabel(id)), row);
+  }
+  const saved = Math.round((1 - min / base) * 100);
+  $("#labText").textContent =
+    `Same data, ${saved}% fewer tokens just by changing the format. ` +
+    `The AI pays this on every tool call, and again on every round that keeps it in the history.`;
+
+  const table = $("#labTable");
+  const head = el("tr");
+  head.append(el("th", "", "Tool call"), ...ids.map((id) => el("th", "", fmtLabel(id))));
+  table.replaceChildren(head);
+  for (const c of lab.calls) {
+    const tr = el("tr");
+    tr.append(el("td", "", c.call), ...ids.map((id) => el("td", "", `${c.tokens[id].toLocaleString("en-US")} (${c.lines[id]} line${c.lines[id] > 1 ? "s" : ""})`)));
+    table.append(tr);
+  }
 }
 
 init();

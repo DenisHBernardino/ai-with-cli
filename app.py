@@ -24,12 +24,14 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
 import core
+from formats import FORMATS, LABELS
 
 WEB_FILE = core.FOLDER / "web" / "index.html"
 DEFAULT_REPLAY = core.FOLDER / "runs" / "demo.json"
 
-state = {"mode": "offline", "replay": None, "costs": None}
+state = {"mode": "offline", "replay": None, "costs": None, "lab": None}
 costs_lock = threading.Lock()
+lab_lock = threading.Lock()
 
 
 # ================= recording a replay =================
@@ -39,19 +41,33 @@ async def record(path):
     questions = core.load_questions()
     data = {"model": core.MODEL, "answers": {}, "costs": None}
 
-    async with core.mcp_session() as session:
-        mcp_tools = await core.get_mcp_tools(session)
-        for item in questions:
-            q = item["question"]
-            data["answers"][q] = {}
-            for mode in core.MODES:
-                print(f"🎬 [{mode}] {q}")
-                result = await core.ask(q, mode, session, mcp_tools)
+    for item in questions:
+        data["answers"][item["question"]] = {}
+
+    # No tools and CLI
+    for item in questions:
+        q = item["question"]
+        for mode in ["none", "cli"]:
+            print(f"🎬 [{mode}] {q}")
+            result = await core.ask(q, mode)
+            result["correct"] = core.is_correct(result["answer"], item["expected"])
+            data["answers"][q][mode] = result
+
+    # MCP, once per output format
+    for fmt in FORMATS:
+        async with core.mcp_session(fmt) as session:
+            mcp_tools = await core.get_mcp_tools(session)
+            for item in questions:
+                q = item["question"]
+                print(f"🎬 [mcp, {fmt}] {q}")
+                result = await core.ask(q, "mcp", session, mcp_tools)
                 result["correct"] = core.is_correct(result["answer"], item["expected"])
-                data["answers"][q][mode] = result
+                data["answers"][q][replay_key("mcp", fmt)] = result
 
     print("⏳ Counting the fixed cost for 3 to 50 tools...")
     data["costs"] = await core.all_costs()
+    print("⏳ Running the output format lab...")
+    data["format_lab"] = await core.format_lab()
 
     path.parent.mkdir(exist_ok=True)
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
@@ -60,30 +76,42 @@ async def record(path):
 
 # ================= API =================
 
+def replay_key(mode, fmt):
+    """Where an answer lives in runs/demo.json: 'mcp' is pretty JSON, others are 'mcp:compact'..."""
+    return mode if mode != "mcp" or fmt == "pretty" else f"mcp:{fmt}"
+
+
 def api_status():
     return {
         "mode": state["mode"],
         "model": (state["replay"] or {}).get("model", core.MODEL),
         "questions": [q["question"] for q in core.load_questions()],
+        "formats": [{"id": f, "label": LABELS[f]} for f in FORMATS],
     }
 
 
 def api_ask(body):
     question = (body.get("question") or "").strip()
     mode = body.get("mode")
+    fmt = body.get("fmt") or "pretty"
     if not question or mode not in core.MODES:
         return 400, {"error": "Send a question and a mode: none, cli or mcp."}
+    if fmt not in FORMATS:
+        return 400, {"error": f"Unknown format. Use one of: {', '.join(FORMATS)}"}
 
     if state["mode"] == "replay":
         recorded = state["replay"]["answers"].get(question)
         if not recorded:
             return 400, {"error": "Replay mode only has the test questions. Pick one of them."}
-        return 200, recorded[mode]
+        key = replay_key(mode, fmt)
+        if key not in recorded:
+            return 400, {"error": "This replay has no recording for that format. Record it again with --record."}
+        return 200, recorded[key]
 
     if state["mode"] == "offline":
         return 400, {"error": "No API key and no replay. See the setup steps on the page."}
 
-    result = asyncio.run(core.ask_once(question, mode))
+    result = asyncio.run(core.ask_once(question, mode, fmt))
     expected = core.expected_for(question)
     result["correct"] = None if expected is None else core.is_correct(result["answer"], expected)
     return 200, result
@@ -98,6 +126,20 @@ def api_costs():
         if state["costs"] is None:
             state["costs"] = asyncio.run(core.all_costs())
     return 200, state["costs"]
+
+
+def api_format_lab():
+    if state["mode"] == "replay":
+        lab = state["replay"].get("format_lab")
+        if not lab:
+            return 400, {"error": "This replay has no format lab. Record it again with --record."}
+        return 200, lab
+    if state["mode"] == "offline":
+        return 400, {"error": "Needs an API key or a replay to count tokens."}
+    with lab_lock:  # count only once, then reuse
+        if state["lab"] is None:
+            state["lab"] = asyncio.run(core.format_lab())
+    return 200, state["lab"]
 
 
 class Handler(BaseHTTPRequestHandler):
@@ -121,6 +163,8 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json(200, api_status())
         elif self.path == "/api/costs":
             self.handle_errors(api_costs)
+        elif self.path == "/api/format-lab":
+            self.handle_errors(api_format_lab)
         else:
             self.send_json(404, {"error": "Not found"})
 
@@ -160,6 +204,15 @@ def main():
             raise SystemExit("❌ Recording needs ANTHROPIC_API_KEY.")
         asyncio.run(record(args.replay_file))
         return
+
+    if not WEB_FILE.exists():
+        raise SystemExit(
+            f"❌ Missing {WEB_FILE}\n"
+            "   The web page must be inside a 'web' folder: web/index.html"
+        )
+
+    if not core.has_api_key():
+        print("ℹ️  No API key found. Add it to the .env file (see .env.example).")
 
     if args.replay_file.exists() and (args.replay or not core.has_api_key()):
         state["mode"] = "replay"

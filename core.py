@@ -54,12 +54,14 @@ def load_questions():
 # ================= CLI =================
 
 # For the CLI, we give ONE tool: "a terminal that only runs 'pizza'".
+# Careful: the AI copies the examples in a tool description. An earlier version
+# showed 'menu --json' here, and the AI asked for JSON almost every time.
 CLI_TOOL = {
     "name": "pizza",
     "description": (
         "Runs the Nona Byte Pizza CLI. Pass the arguments as you would type "
         "them in a terminal after 'pizza'. If you don't know the commands, "
-        "start with '--help'. Examples: '--help', 'menu --json'."
+        "start with '--help'. Examples: '--help', 'menu', 'price margherita --size L'."
     ),
     "input_schema": {
         "type": "object",
@@ -96,9 +98,16 @@ def run_cli(args):
 # ================= MCP =================
 
 @asynccontextmanager
-async def mcp_session():
-    """Start the MCP server as a child process and connect to it."""
-    server = StdioServerParameters(command=sys.executable, args=[str(FOLDER / "mcp_server.py")])
+async def mcp_session(fmt="pretty"):
+    """
+    Start the MCP server as a child process and connect to it.
+    fmt = output format of the tools: "pretty", "compact" or "text" (see formats.py).
+    """
+    server = StdioServerParameters(
+        command=sys.executable,
+        args=[str(FOLDER / "mcp_server.py")],
+        env={**os.environ, "MCP_OUTPUT_FORMAT": fmt, "PYTHONIOENCODING": "utf-8"},
+    )
     async with stdio_client(server) as (read, write):
         async with ClientSession(read, write) as session:
             await session.initialize()
@@ -114,13 +123,43 @@ async def get_mcp_tools(session):
     ]
 
 
+# ================= counting tokens of a text =================
+
+_token_cache = {}
+
+
+def count_text_tokens(text, model=None):
+    """
+    How many tokens a piece of text costs for the model (real count from the API).
+    We count a message with the text and remove the small fixed cost of any message.
+    """
+    model = model or MODEL
+    if (model, text) in _token_cache:
+        return _token_cache[(model, text)]
+
+    def count(t):
+        return get_client().messages.count_tokens(
+            model=model, messages=[{"role": "user", "content": t}]
+        ).input_tokens
+
+    if (model, None) not in _token_cache:
+        _token_cache[(model, None)] = count("a") - 1  # fixed cost of a message
+    n = count(text) - _token_cache[(model, None)]
+    _token_cache[(model, text)] = n
+    return n
+
+
 # ================= the ask loop =================
 
-async def ask(question, mode, session=None, mcp_tools=None):
+async def ask(question, mode, session=None, mcp_tools=None, model=None, measure=True):
     """
     Ask one question in one mode: "none", "cli" or "mcp".
-    Returns the answer plus a trace of every tool the AI used.
+    Returns the answer, a trace of every tool the AI used, and the tokens split by type:
+      - input_tokens:       everything the AI read (question, tool menu, tool outputs, history)
+      - output_tokens:      everything the AI wrote (its answer and its tool calls)
+      - tool_output_tokens: only the tool outputs, counted once each
     """
+    model = model or MODEL
     if mode == "cli":
         tools = [CLI_TOOL]
     elif mode == "mcp":
@@ -130,13 +169,15 @@ async def ask(question, mode, session=None, mcp_tools=None):
 
     messages = [{"role": "user", "content": question}]
     extra = {"tools": tools} if tools else {}
-    trace, tokens, start = [], 0, time.time()
+    trace, start = [], time.time()
+    input_tokens = output_tokens = 0
 
     for _ in range(10):  # max rounds, so it never loops forever
         response = get_client().messages.create(
-            model=MODEL, max_tokens=1024, system=SYSTEM, messages=messages, **extra
+            model=model, max_tokens=1024, system=SYSTEM, messages=messages, **extra
         )
-        tokens += response.usage.input_tokens + response.usage.output_tokens
+        input_tokens += response.usage.input_tokens
+        output_tokens += response.usage.output_tokens
 
         if response.stop_reason != "tool_use":
             answer = "".join(b.text for b in response.content if b.type == "text").strip()
@@ -155,26 +196,36 @@ async def ask(question, mode, session=None, mcp_tools=None):
                 label = f"{block.name}({json.dumps(block.input, ensure_ascii=False)})"
                 result = await session.call_tool(block.name, block.input)
                 output = "".join(c.text for c in result.content if c.type == "text") or "(no output)"
-            trace.append({"call": label, "output": output})
+            step = {"call": label, "output": output, "tokens": None}
+            if measure:
+                try:
+                    step["tokens"] = count_text_tokens(output, model)
+                except Exception:
+                    pass  # counting is a bonus: never break the answer because of it
+            trace.append(step)
             results.append({"type": "tool_result", "tool_use_id": block.id, "content": output})
         messages.append({"role": "user", "content": results})
     else:
         answer = "(gave up: too many calls)"
 
+    counted = [s["tokens"] for s in trace]
     return {
         "answer": answer,
-        "tokens": tokens,
+        "tokens": input_tokens + output_tokens,
+        "input_tokens": input_tokens,
+        "output_tokens": output_tokens,
+        "tool_output_tokens": None if None in counted else sum(counted),
         "calls": len(trace),
         "seconds": round(time.time() - start, 1),
         "trace": trace,
     }
 
 
-async def ask_once(question, mode):
+async def ask_once(question, mode, fmt="pretty"):
     """Same as ask(), but opens its own MCP connection when needed (used by the web app)."""
     if mode != "mcp":
         return await ask(question, mode)
-    async with mcp_session() as session:
+    async with mcp_session(fmt) as session:
         tools = await get_mcp_tools(session)
         return await ask(question, mode, session, tools)
 
@@ -299,3 +350,39 @@ async def all_costs():
         real = await get_mcp_tools(session)
     mcp = {n: fixed_cost(real + fake_tools(n - len(real))) for n in COST_STEPS}
     return {"cli": fixed_cost([CLI_TOOL]), "mcp": mcp}
+
+
+# ================= the output format lab =================
+
+# The same 5 tool calls, used to compare output formats.
+LAB_CALLS = [
+    ("list_menu", {}),
+    ("list_menu", {"vegetarian": True}),
+    ("list_menu", {"available": True}),
+    ("search_pizzas", {"terms": ["mushroom"]}),
+    ("get_price", {"pizza": "Margherita", "size": "L"}),
+]
+
+
+def call_label(name, args):
+    inside = ", ".join(f"{k}={json.dumps(v, ensure_ascii=False)}" for k, v in args.items())
+    return f"{name}({inside})"
+
+
+async def format_lab(model=None):
+    """
+    Same calls, same MCP server, same data. Only the output format changes.
+    No AI answer is generated: we only count the tokens of each tool output.
+    So the format is the ONLY variable.
+    """
+    from formats import FORMATS
+    rows = [{"call": call_label(n, a), "tokens": {}, "lines": {}} for n, a in LAB_CALLS]
+    for fmt in FORMATS:
+        async with mcp_session(fmt) as session:
+            for row, (name, args) in zip(rows, LAB_CALLS):
+                result = await session.call_tool(name, args)
+                text = "".join(c.text for c in result.content if c.type == "text")
+                row["tokens"][fmt] = count_text_tokens(text, model)
+                row["lines"][fmt] = text.count("\n") + 1
+    totals = {fmt: sum(r["tokens"][fmt] for r in rows) for fmt in FORMATS}
+    return {"model": model or MODEL, "calls": rows, "totals": totals}

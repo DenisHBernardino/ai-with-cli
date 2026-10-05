@@ -18,7 +18,7 @@ Então fazemos as mesmas perguntas em 3 cenários:
 
 E comparamos acertos e custo.
 
-![A Arena: mesma pergunta, três IAs lado a lado](docs/arena.png)
+![A Arena: mesma pergunta, três IAs lado a lado](docs/arena-pt.gif)
 
 **Jeito mais rápido de ver:** rode `python app.py` e abra **a Arena** no navegador. 🏟️
 
@@ -79,6 +79,7 @@ flowchart TD
 | `core.py` | Lógica compartilhada: fala com a IA, roda ferramentas, conta tokens. |
 | `app.py` + `web/index.html` | 🏟️ A Arena: a página web. |
 | `experiment.py` | A versão no terminal: todas as perguntas, várias rodadas, tabela de placar. |
+| `format_lab.py` + `formats.py` | 📦 O laboratório de formato: os mesmos dados em 3 formatos. |
 | `.env.example` | Modelo do arquivo `.env` com a chave da API. |
 | `data.json` | O cardápio (a "base de dados"). |
 | `questions.json` | As perguntas do teste e as respostas certas. |
@@ -242,6 +243,80 @@ Digite na Arena (em inglês, como o projeto). Elas exigem várias etapas, então
 
 ---
 
+## 📦 O laboratório de formato de saída
+
+Nas primeiras execuções, o MCP gastou mais tokens que o CLI. Os registros indicavam um motivo: o CLI responde com texto curto, e as ferramentas MCP respondiam com JSON formatado. Mas os totais misturavam várias coisas: o tamanho da saída das ferramentas, o tamanho da resposta da IA e o número de chamadas.
+
+Por isso, o laboratório separa tudo.
+
+**Parte 1: teste isolado.** As mesmas 5 chamadas, o mesmo servidor MCP, os mesmos dados. Só o formato da saída muda. Nenhuma resposta da IA é gerada: só contamos os tokens com a API. **O formato é a única variável.**
+
+| Formato | O que a IA recebe |
+|---|---|
+| Pretty JSON | JSON com quebras de linha e recuos |
+| Compact JSON | O mesmo JSON, sem espaços |
+| Plain text | Texto curto, exatamente o que o CLI mostra |
+
+**Parte 2: teste de ponta a ponta.** As 6 perguntas do teste respondidas pela IA, com o MCP em cada formato, mais o CLI. Os tokens são separados em três números:
+
+- **Saída das ferramentas:** só o que as ferramentas devolveram, contado uma vez cada.
+- **A IA leu:** tudo o que a IA leu (pergunta, descrições das ferramentas, saídas e histórico).
+- **A IA escreveu:** tudo o que a IA escreveu (a resposta e as chamadas de ferramenta).
+
+Os resultados aparecem **por modelo**, nunca em média entre modelos.
+
+```bash
+python format_lab.py                          # só a parte 1 (só contagem de tokens)
+python format_lab.py --e2e --runs 3           # parte 1 + parte 2
+python format_lab.py --e2e --models claude-sonnet-5-5 claude-haiku-4-5
+python format_lab.py --e2e --save             # também salva runs/format_lab.json
+```
+
+Na Arena também dá para ver:
+
+- O seletor **"MCP tools answer in"** muda o formato da coluna do MCP.
+- Cada coluna mostra **📦 tokens of tool output**, separado do total.
+- A seção **output format lab** mostra a parte 1 com barras.
+
+### Nossos resultados
+
+Modelo `claude-sonnet-5-5`, 6 perguntas, 3 rodadas por pergunta, em cada setup.
+
+**Parte 1: isolado (o formato é a única variável)**
+
+| Formato | Tokens da saída (5 chamadas) | vs JSON formatado |
+|---|---|---|
+| Pretty JSON | 2.281 | 0% |
+| Compact JSON | 1.479 | -35% |
+| Plain text | 1.101 | -52% |
+
+**Parte 2: ponta a ponta (média por rodada das 6 perguntas)**
+
+| Setup | Acertos | Chamadas | Saída das ferramentas | A IA leu | A IA escreveu | Total |
+|---|---|---|---|---|---|---|
+| CLI* | 6,0/6 | 7,7 | 4.541 | 11.630 | 825 | 12.455 (-13%) |
+| MCP, Pretty JSON | 6,0/6 | 8,0 | 3.231 | 13.384 | 939 | 14.323 (0%) |
+| MCP, Compact JSON | 6,0/6 | 8,0 | 2.099 | 12.252 | 881 | 13.133 (-8%) |
+| MCP, Plain text | 6,0/6 | 8,0 | 1.544 | 11.696 | 894 | 12.589 (-12%) |
+
+**O que aprendemos**
+
+1. **O formato sozinho pesa muito.** Os mesmos dados: 35% menos tokens em JSON compacto, 52% menos em texto simples.
+2. **Formatos curtos não pioraram a precisão.** Todos os setups acertaram 18 de 18.
+3. **De ponta a ponta, o ganho é menor (8% a 12%).** A saída das ferramentas é só cerca de um quarto do que a IA lê. O resto são as instruções, as descrições das ferramentas e o histórico, que é reenviado a cada rodada.
+4. **Com texto simples, o MCP quase empata com o CLI** (12.589 contra 12.455 tokens).
+5. **A IA copia os exemplos da descrição da ferramenta.** O CLI devolveu mais saída (4.541 contra 1.544). Os registros mostraram o motivo: a descrição da ferramenta do CLI tinha `menu --json` como exemplo, e a IA rodou `pizza menu --json` na maioria das perguntas, recebendo JSON formatado. Ela leu o `--help` só uma vez. Tiramos o `--json` do exemplo.
+6. **O formato muda a resposta, não só o custo.** Com JSON, a IA respondeu "52", porque o JSON não tem moeda. Com texto, respondeu "$52.00". A IA repete o que vê.
+7. **Nosso primeiro número estava alto demais.** Uma pergunta e uma rodada mostraram o MCP custando cerca de 40% a mais. Com 6 perguntas e 3 rodadas, a diferença com JSON formatado é de 13%.
+
+\* *Esta execução usou a descrição antiga do CLI, com `menu --json` como exemplo. Rode `python format_lab.py --e2e` de novo para ver o CLI com texto simples.*
+
+*Limites: um modelo, um cardápio pequeno e perguntas fáceis. Teste outros modelos com `--models`.*
+
+**O que ele não mede:** se um formato faz a IA entender os dados melhor ou pior em tarefas mais difíceis. Por isso, a parte 2 também mostra os acertos.
+
+---
+
 ## ✨ O que torna uma ferramenta boa para IA
 
 Vale para CLI e para MCP:
@@ -249,7 +324,7 @@ Vale para CLI e para MCP:
 | Detalhe | No CLI | No MCP |
 |---|---|---|
 | Explica como usar | `--help` com exemplos | Descrição clara em cada ferramenta |
-| Saída fácil de ler | `--json` | Retorna JSON |
+| Saída fácil de ler | Texto curto (`--json` quando precisar) | Texto curto ou JSON compacto |
 | Erro com dica | `Hint: run 'menu'` | `Hint: use list_menu` |
 | Não estraga nada | Só leitura + comandos permitidos | Só leitura |
 
@@ -273,23 +348,11 @@ Leituras (em inglês):
 
 1. Remova os exemplos do `--help`. A IA com CLI erra mais?
 2. Apague as descrições das ferramentas MCP. O que muda?
-3. Faça as ferramentas MCP devolverem só os campos necessários (ou JSON compacto). O MCP fica mais barato que o CLI?
+3. Crie um 4º formato no `formats.py` que devolva só os campos necessários. Ele ganha do texto simples?
 4. Abra o `core.py` e mude as descrições das ferramentas falsas. O controle deslizante muda?
 5. Crie o comando `pizza combo` e a ferramenta `combo` com desconto.
 6. Mude `available` da Pepperoni para `true` e rode de novo.
-
----
-
-## 🎥 Grave um GIF para o README ou o LinkedIn
-
-1. Rode `python app.py` e clique numa pergunta.
-2. Grave a tela por uns 15 segundos:
-   - Windows: [ScreenToGif](https://www.screentogif.com/)
-   - Mac: [Kap](https://getkap.co/)
-   - Linux: [Peek](https://github.com/phw/peek)
-3. Salve como `docs/arena.gif` e use no topo deste README no lugar do `docs/arena.png`.
-
----
+ 
 
 ## 📄 Licença
 
