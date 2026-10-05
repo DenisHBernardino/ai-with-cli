@@ -18,7 +18,7 @@ So we ask the same questions in 3 scenarios:
 
 Then we compare correct answers and cost.
 
-<!-- After recording, add the GIF here: ![The Arena](docs/arena.gif) -->
+![The Arena: same question, three AIs side by side](docs/arena.png)
 
 **Fastest way to see it:** run `python app.py` and open **The Arena** in your browser. 🏟️
 
@@ -77,6 +77,7 @@ flowchart TD
 | `core.py` | Shared logic: talks to the AI, runs tools, counts tokens. |
 | `app.py` + `web/index.html` | 🏟️ The Arena: the web page. |
 | `experiment.py` | The terminal version: all questions, many runs, a score table. |
+| `.env.example` | Template for your `.env` file with the API key. |
 | `data.json` | The menu (our "database"). |
 | `questions.json` | The test questions and the right answers. |
 | `runs/demo.json` | A recorded real run, for replay mode (you create it). |
@@ -196,16 +197,46 @@ No API key needed. GitHub Actions runs them on every push.
 
 ## 🔍 What to look for in the results
 
-**1. With no tools, the AI gets it wrong.**
-The menu is fake. It can only guess or say "I don't know".
+**1. With no tools, the AI can't get it right.**
+The menu is fake. The AI either guesses or says "I don't know". A good model usually refuses to guess, which is honest, but it still can't help.
 
-**2. CLI and MCP should score about the same.**
-Both give access to the same data.
+**2. CLI and MCP learn the tool in different ways.**
+The CLI AI often reads `--help` first, like a developer reading the docs.
+The MCP AI skips that step, because MCP tools arrive already described. It goes straight to calling them.
 
-**3. Here, the cost is close to a tie.**
-There are only 3 MCP tools, so the "menu" is small.
-The CLI may use one extra call to run `--help`.
-With 30 or more tools, MCP would cost a lot more.
+**3. Output size drives the cost.**
+In our tests, MCP spent more tokens than the CLI, even with only 3 tools.
+The reason: the CLI answers with short text, and the MCP tools answer with full JSON.
+
+Example from one real run (`claude-sonnet-5-5`):
+
+| Question | CLI | MCP |
+|---|---|---|
+| "How much is a medium Ham & Egg plus a large Four Cheese?" | 1,352 tokens, 2 calls | 2,063 tokens, 2 calls |
+| "Explore the tool, then tell me 3 ways you can help." | 3,444 tokens, 5 calls | 4,847 tokens, 4 calls |
+
+In the second question, the CLI AI ran `pizza --help`, then `--help` for each command, then `pizza menu`.
+The MCP AI called `list_menu` 3 times and got back 112, 64 and 97 lines of JSON.
+
+*AI answers change on every run. Run your own and compare.*
+
+**4. More tools = a bigger hidden cost.**
+Drag the slider in the Arena from 3 to 50 tools. MCP sends all tool descriptions with every question.
+
+---
+
+## 💬 Questions to try
+
+Type these in the Arena. They need several steps, so you see the AI really explore the tool.
+
+| Question | What it shows | Expected answer |
+|---|---|---|
+| Before answering, explore what the pizza tool can do. Then tell me 3 ways you can help me. | How each AI learns the tool | Free answer |
+| I want a Pepperoni. If I can't have it, what's the closest pizza available today? | Finds that Pepperoni is sold out, compares ingredients | Ham & Egg |
+| I'm vegetarian and I have $40. What medium pizza can I order today? | Filter + price + availability | Banana Cinnamon ($38) |
+| I'm allergic to onion. Which pizzas can I eat, and which is the cheapest large one? | Excludes ingredients | Banana Cinnamon ($48) |
+| Which ingredient appears in the most pizzas? | Reads the whole menu and counts | Mozzarella (6 of 7) |
+| Plan a party: 2 large pizzas, one vegetarian and one with meat, only available ones, cheapest total. | Planning | Banana Cinnamon + Chicken & Cream Cheese = $102 |
 
 ---
 
@@ -240,9 +271,10 @@ Further reading:
 
 1. Remove the examples from `--help`. Does the CLI AI make more mistakes?
 2. Delete the MCP tool descriptions. What changes?
-3. Open `core.py` and change the fake tool descriptions. Does the slider change?
-4. Add a `pizza combo` command and a `combo` tool with a discount.
-5. Set Pepperoni `available` to `true` and run it again.
+3. Make the MCP tools return only the fields needed (or compact JSON). Does MCP get cheaper than the CLI?
+4. Open `core.py` and change the fake tool descriptions. Does the slider change?
+5. Add a `pizza combo` command and a `combo` tool with a discount.
+6. Set Pepperoni `available` to `true` and run it again.
 
 ---
 
@@ -253,7 +285,7 @@ Further reading:
    - Windows: [ScreenToGif](https://www.screentogif.com/)
    - Mac: [Kap](https://getkap.co/)
    - Linux: [Peek](https://github.com/phw/peek)
-3. Save it as `docs/arena.gif` and uncomment the GIF line at the top of this README.
+3. Save it as `docs/arena.gif` and use it at the top of this README instead of `docs/arena.png`.
 
 ---
 

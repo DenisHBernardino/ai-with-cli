@@ -18,7 +18,7 @@ Então fazemos as mesmas perguntas em 3 cenários:
 
 E comparamos acertos e custo.
 
-<!-- Depois de gravar, coloque o GIF aqui: ![A Arena](docs/arena.gif) -->
+![A Arena: mesma pergunta, três IAs lado a lado](docs/arena.png)
 
 **Jeito mais rápido de ver:** rode `python app.py` e abra **a Arena** no navegador. 🏟️
 
@@ -79,6 +79,7 @@ flowchart TD
 | `core.py` | Lógica compartilhada: fala com a IA, roda ferramentas, conta tokens. |
 | `app.py` + `web/index.html` | 🏟️ A Arena: a página web. |
 | `experiment.py` | A versão no terminal: todas as perguntas, várias rodadas, tabela de placar. |
+| `.env.example` | Modelo do arquivo `.env` com a chave da API. |
 | `data.json` | O cardápio (a "base de dados"). |
 | `questions.json` | As perguntas do teste e as respostas certas. |
 | `runs/demo.json` | Uma execução real gravada, para o modo replay (você cria). |
@@ -198,16 +199,46 @@ Não precisa de chave. O GitHub Actions roda a cada push.
 
 ## 🔍 O que observar no resultado
 
-**1. Sem ferramenta, a IA erra.**
-O cardápio é inventado. Ela só pode chutar ou dizer "não sei".
+**1. Sem ferramenta, a IA não tem como acertar.**
+O cardápio é inventado. A IA chuta ou diz "não sei". Um bom modelo costuma recusar o chute, o que é honesto, mas ainda não ajuda.
 
-**2. CLI e MCP devem acertar parecido.**
-Os dois dão acesso aos mesmos dados.
+**2. CLI e MCP aprendem a ferramenta de jeitos diferentes.**
+A IA com CLI muitas vezes lê o `--help` primeiro, como um dev lendo a documentação.
+A IA com MCP pula essa etapa, porque as ferramentas MCP já chegam descritas. Ela vai direto chamar.
 
-**3. Aqui, o custo fica perto do empate.**
-São só 3 ferramentas MCP, então o "cardápio" é pequeno.
-O CLI pode gastar uma chamada a mais rodando `--help`.
-Com 30 ou mais ferramentas, o MCP pesaria bem mais.
+**3. O tamanho da saída define o custo.**
+Nos nossos testes, o MCP gastou mais tokens que o CLI, mesmo com só 3 ferramentas.
+O motivo: o CLI responde com texto curto, e as ferramentas MCP respondem com JSON completo.
+
+Exemplo de uma execução real (`claude-sonnet-5-5`):
+
+| Pergunta | CLI | MCP |
+|---|---|---|
+| "How much is a medium Ham & Egg plus a large Four Cheese?" | 1.352 tokens, 2 chamadas | 2.063 tokens, 2 chamadas |
+| "Explore the tool, then tell me 3 ways you can help." | 3.444 tokens, 5 chamadas | 4.847 tokens, 4 chamadas |
+
+Na segunda pergunta, a IA com CLI rodou `pizza --help`, depois o `--help` de cada comando e depois `pizza menu`.
+A IA com MCP chamou `list_menu` 3 vezes e recebeu 112, 64 e 97 linhas de JSON.
+
+*A IA varia a cada execução. Rode a sua e compare.*
+
+**4. Mais ferramentas = custo escondido maior.**
+Arraste o controle da Arena de 3 até 50 ferramentas. O MCP envia a descrição de todas em toda pergunta.
+
+---
+
+## 💬 Perguntas para testar
+
+Digite na Arena (em inglês, como o projeto). Elas exigem várias etapas, então você vê a IA explorar a ferramenta de verdade.
+
+| Pergunta | O que mostra | Resposta esperada |
+|---|---|---|
+| Before answering, explore what the pizza tool can do. Then tell me 3 ways you can help me. | Como cada IA aprende a ferramenta | Resposta livre |
+| I want a Pepperoni. If I can't have it, what's the closest pizza available today? | Descobre que a Pepperoni acabou e compara ingredientes | Ham & Egg |
+| I'm vegetarian and I have $40. What medium pizza can I order today? | Filtro + preço + disponibilidade | Banana Cinnamon ($38) |
+| I'm allergic to onion. Which pizzas can I eat, and which is the cheapest large one? | Exclui ingredientes | Banana Cinnamon ($48) |
+| Which ingredient appears in the most pizzas? | Lê o cardápio inteiro e conta | Mozzarella (6 de 7) |
+| Plan a party: 2 large pizzas, one vegetarian and one with meat, only available ones, cheapest total. | Planejamento | Banana Cinnamon + Chicken & Cream Cheese = $102 |
 
 ---
 
@@ -242,9 +273,10 @@ Leituras (em inglês):
 
 1. Remova os exemplos do `--help`. A IA com CLI erra mais?
 2. Apague as descrições das ferramentas MCP. O que muda?
-3. Abra o `core.py` e mude as descrições das ferramentas falsas. O controle deslizante muda?
-4. Crie o comando `pizza combo` e a ferramenta `combo` com desconto.
-5. Mude `available` da Pepperoni para `true` e rode de novo.
+3. Faça as ferramentas MCP devolverem só os campos necessários (ou JSON compacto). O MCP fica mais barato que o CLI?
+4. Abra o `core.py` e mude as descrições das ferramentas falsas. O controle deslizante muda?
+5. Crie o comando `pizza combo` e a ferramenta `combo` com desconto.
+6. Mude `available` da Pepperoni para `true` e rode de novo.
 
 ---
 
@@ -255,7 +287,7 @@ Leituras (em inglês):
    - Windows: [ScreenToGif](https://www.screentogif.com/)
    - Mac: [Kap](https://getkap.co/)
    - Linux: [Peek](https://github.com/phw/peek)
-3. Salve como `docs/arena.gif` e descomente a linha do GIF no topo deste README.
+3. Salve como `docs/arena.gif` e use no topo deste README no lugar do `docs/arena.png`.
 
 ---
 
