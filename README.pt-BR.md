@@ -2,6 +2,8 @@
 
 🇺🇸 [English](README.md) | 🇧🇷 Português
 
+[![tests](https://github.com/DenisHBernardino/ai-with-cli/actions/workflows/tests.yml/badge.svg)](https://github.com/DenisHBernardino/ai-with-cli/actions/workflows/tests.yml)
+
 Um experimento simples para mostrar uma ideia:
 
 > **Uma IA sem acesso aos dados inventa. Com um CLI ou um MCP para consultar, ela acerta.**
@@ -15,6 +17,10 @@ Então fazemos as mesmas perguntas em 3 cenários:
 - **Com MCP:** a IA recebe "botões" prontos de um servidor MCP.
 
 E comparamos acertos e custo.
+
+<!-- Depois de gravar, coloque o GIF aqui: ![A Arena](docs/arena.gif) -->
+
+**Jeito mais rápido de ver:** rode `python app.py` e abra **a Arena** no navegador. 🏟️
 
 > ℹ️ O código, os comandos e as perguntas estão em inglês. A explicação está em português.
 
@@ -70,9 +76,13 @@ flowchart TD
 |---|---|
 | `pizza.py` | O CLI. Lê o cardápio e responde comandos. |
 | `mcp_server.py` | O servidor MCP. Mesmos dados, entregues como ferramentas. |
+| `core.py` | Lógica compartilhada: fala com a IA, roda ferramentas, conta tokens. |
+| `app.py` + `web/index.html` | 🏟️ A Arena: a página web. |
+| `experiment.py` | A versão no terminal: todas as perguntas, várias rodadas, tabela de placar. |
 | `data.json` | O cardápio (a "base de dados"). |
 | `questions.json` | As perguntas do teste e as respostas certas. |
-| `experiment.py` | Faz as perguntas nos 3 modos e mostra o placar. |
+| `runs/demo.json` | Uma execução real gravada, para o modo replay (você cria). |
+| `tests/` | Testes automáticos (rodam no GitHub Actions). |
 | `docs/cli-vs-mcp.svg` | O infográfico acima. |
 
 ---
@@ -106,42 +116,83 @@ python pizza.py price pepperoni --json
 
 ### 3. Coloque sua chave da API
 
-Pegue uma chave em [console.anthropic.com](https://console.anthropic.com).
+Pegue uma chave em [console.anthropic.com](https://console.anthropic.com) (Settings > API keys).
+
+Copie o arquivo de exemplo e cole sua chave nele:
 
 ```bash
-export ANTHROPIC_API_KEY="sua-chave"          # Mac/Linux
-$env:ANTHROPIC_API_KEY="sua-chave"            # Windows (PowerShell)
+cp .env.example .env          # Windows: copy .env.example .env
 ```
 
-### 4. Rode o experimento
+```
+ANTHROPIC_API_KEY=sk-ant-sua-chave-aqui
+```
+
+O `.env` está no `.gitignore`, então **nunca** vai para o GitHub.
+Sem chave? Pule este passo: os testes e o CLI funcionam sem ela.
+
+### 4. Abra a Arena 🏟️
 
 ```bash
-python experiment.py
+python app.py
 ```
 
-O servidor MCP liga sozinho. Você vai ver a IA trabalhando:
+O navegador abre em `http://localhost:8000`.
+
+- Clique numa pergunta. As 3 IAs respondem lado a lado.
+- Olhe a coluna do CLI: a IA roda `pizza --help` **sozinha** para aprender a ferramenta.
+- Olhe a coluna "No tools": ela responde com confiança, mas sem dados.
+- Arraste o controle do **custo escondido** de 3 até 50 ferramentas MCP. A barra de tokens cresce. São contagens reais da API.
+
+### 5. Sem chave da API? Use o modo replay
+
+Alguém com chave grava uma execução real:
+
+```bash
+python app.py --record      # salva runs/demo.json
+```
+
+Faça commit do `runs/demo.json`. Agora qualquer um roda `python app.py` **sem chave**.
+A página mostra o selo "Replay of a real run", para ninguém achar que é ao vivo.
+
+### 6. Rode o experimento completo no terminal
+
+```bash
+python experiment.py              # cada pergunta 3 vezes
+python experiment.py --runs 1     # mais rápido e barato
+```
+
+A IA varia de uma rodada para outra, então o placar é uma média.
 
 ```
 ❓ 1. How much is a large Margherita?
-  ❌ [no tools] I don't have access to the current menu...
      🔧 AI ran: pizza --help
      🔧 AI ran: pizza price margherita --size L
-  ✅ [with CLI] A large Margherita costs $52.00.
+  ❌❌❌ [no tools] I don't have access to the current menu...
+  ✅✅✅ [with CLI] A large Margherita costs $52.00.
      🔌 AI called: get_price({"pizza": "Margherita", "size": "L"})
-  ✅ [with MCP] A large Margherita costs $52.00.
+  ✅✅✅ [with MCP] A large Margherita costs $52.00.
 ```
 
-*(Exemplo ilustrativo. As respostas da IA variam.)*
+*(Exemplo ilustrativo. Seus resultados vão ser diferentes.)*
 
 No fim, sai o placar. Cole o seu aqui. 👇
 
-| Modo | Acertos | Tokens totais | Chamadas de ferramenta | Custo fixo por chamada |
+| Modo | Acertos | Tokens por rodada | Chamadas por rodada | Custo fixo por chamada |
 |---|---|---|---|---|
 | no tools | ? / 6 | ? | 0 | 0 tokens |
 | with CLI | ? / 6 | ? | ? | ? tokens |
 | with MCP | ? / 6 | ? | ? | ? tokens |
 
 **Custo fixo** = tokens que as descrições das ferramentas somam em **toda** chamada.
+
+### 7. Rode os testes
+
+```bash
+python -m unittest discover -s tests -t . -v
+```
+
+Não precisa de chave. O GitHub Actions roda a cada push.
 
 ---
 
@@ -191,9 +242,20 @@ Leituras (em inglês):
 
 1. Remova os exemplos do `--help`. A IA com CLI erra mais?
 2. Apague as descrições das ferramentas MCP. O que muda?
-3. Crie 20 ferramentas MCP falsas. Veja o "custo fixo" subir.
+3. Abra o `core.py` e mude as descrições das ferramentas falsas. O controle deslizante muda?
 4. Crie o comando `pizza combo` e a ferramenta `combo` com desconto.
 5. Mude `available` da Pepperoni para `true` e rode de novo.
+
+---
+
+## 🎥 Grave um GIF para o README ou o LinkedIn
+
+1. Rode `python app.py` e clique numa pergunta.
+2. Grave a tela por uns 15 segundos:
+   - Windows: [ScreenToGif](https://www.screentogif.com/)
+   - Mac: [Kap](https://getkap.co/)
+   - Linux: [Peek](https://github.com/phw/peek)
+3. Salve como `docs/arena.gif` e descomente a linha do GIF no topo deste README.
 
 ---
 

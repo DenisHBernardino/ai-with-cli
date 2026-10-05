@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>🍕 The Arena: CLI vs MCP</title>
+<style>
+  :root {
+    --kraft: #D8B47E;
+    --kraft-dark: #C9A06A;
+    --ink: #3A2313;
+    --ink-soft: #6B4E36;
+    --tomato: #D7301F;
+    --basil: #2F7A3A;
+    --dough: #7A6552;
+    --mozzarella: #FFF9EC;
+    --cheese: #F1E2C6;
+    --panel: var(--mozzarella);
+    --bg: var(--kraft);
+    --text: var(--ink);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #2A1A10;
+      --panel: #3B2719;
+      --cheese: #4A3322;
+      --text: #FFF3DC;
+      --ink-soft: #D9C2A0;
+      --kraft-dark: #4A3322;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.5 "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  }
+  main { max-width: 1240px; margin: 0 auto; padding: 32px 20px 64px; }
+  code, pre, .cmd { font-family: "Cascadia Code", "Fira Code", Consolas, "Courier New", monospace; }
+
+  /* ---------- header ---------- */
+  header { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px; }
+  h1 {
+    font-family: Georgia, "Times New Roman", serif;
+    font-size: clamp(2.2rem, 5vw, 3.6rem);
+    line-height: 1.05; margin: 0;
+  }
+  .tagline { margin: 8px 0 0; font-size: 1.15rem; color: var(--ink-soft); }
+  .badge {
+    padding: 8px 16px; border-radius: 999px; font-weight: bold; font-size: .95rem;
+    background: var(--panel); border: 2px solid currentColor; max-width: 100%;
+  }
+  .badge.live { color: var(--basil); }
+  .badge.replay { color: var(--tomato); }
+  .badge.offline { color: var(--dough); }
+
+  /* ---------- offline help ---------- */
+  .setup { background: var(--panel); border-radius: 18px; padding: 20px 24px; margin-top: 24px; display: none; }
+  .setup h2 { margin: 0 0 8px; font-size: 1.2rem; }
+  .setup pre { background: var(--cheese); padding: 12px 16px; border-radius: 10px; overflow-x: auto; margin: 8px 0; }
+
+  /* ---------- question box ---------- */
+  .ask {
+    background: var(--panel); border-radius: 18px; padding: 20px 24px; margin-top: 24px;
+  }
+  .ask-label { font-weight: bold; margin: 0 0 10px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+  .chip {
+    font: inherit; font-size: .92rem; cursor: pointer;
+    background: var(--cheese); color: var(--text);
+    border: 0; border-radius: 999px; padding: 6px 14px;
+  }
+  .chip:hover { outline: 2px solid var(--tomato); }
+  .row { display: flex; gap: 10px; flex-wrap: wrap; }
+  .chip { text-align: left; }
+  #question {
+    flex: 1 1 260px; min-width: 0; font: inherit; padding: 12px 16px;
+    border: 2px solid var(--kraft-dark); border-radius: 12px;
+    background: var(--bg); color: var(--text);
+  }
+  #go {
+    font: inherit; font-weight: bold; cursor: pointer;
+    background: var(--tomato); color: #FFF9EC; border: 0; border-radius: 12px; padding: 12px 22px;
+  }
+  #go:disabled { opacity: .5; cursor: wait; }
+  :focus-visible { outline: 3px solid var(--basil); outline-offset: 2px; }
+
+  /* ---------- arena columns ---------- */
+  .arena { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 24px; }
+  @media (max-width: 900px) { .arena { grid-template-columns: 1fr; } }
+  .col { background: var(--panel); border-radius: 18px; overflow: hidden; display: flex; flex-direction: column; min-height: 360px; }
+  .col-head { padding: 14px 18px; color: #FFF9EC; display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+  .col-head h2 { margin: 0; font-size: 1.25rem; }
+  .col-head p { margin: 0; font-size: .85rem; opacity: .9; }
+  .col[data-mode="none"] .col-head { background: var(--dough); }
+  .col[data-mode="cli"] .col-head { background: var(--tomato); }
+  .col[data-mode="mcp"] .col-head { background: var(--basil); }
+  .score { font-weight: bold; font-size: 1.1rem; white-space: nowrap; }
+  .col-body { padding: 16px 18px; flex: 1; display: flex; flex-direction: column; gap: 10px; }
+  .empty { color: var(--ink-soft); font-style: italic; margin: auto 0; text-align: center; }
+
+  .step { border-left: 4px solid var(--kraft-dark); padding-left: 10px; }
+  .cmd { font-size: .9rem; font-weight: bold; word-break: break-word; }
+  .tag { display: inline-block; font-size: .78rem; background: var(--cheese); border-radius: 6px; padding: 1px 8px; margin-top: 4px; }
+  details summary { cursor: pointer; font-size: .82rem; color: var(--ink-soft); }
+  details pre { font-size: .78rem; background: var(--cheese); padding: 8px 10px; border-radius: 8px; overflow-x: auto; max-height: 220px; margin: 6px 0 0; }
+
+  .answer { background: var(--cheese); border-radius: 14px; padding: 12px 14px; white-space: pre-wrap; }
+  .note { font-size: .82rem; color: var(--ink-soft); margin: 0; }
+  .verdict { font-weight: bold; font-size: 1.05rem; }
+  .verdict.ok { color: var(--basil); }
+  .verdict.bad { color: var(--tomato); }
+  .error { color: var(--tomato); font-weight: bold; }
+  .stats { border-top: 2px dashed var(--kraft-dark); padding: 10px 18px; font-size: .88rem; display: flex; gap: 14px; flex-wrap: wrap; color: var(--ink-soft); }
+
+  .thinking span { display: inline-block; width: 8px; height: 8px; margin-right: 4px; border-radius: 50%; background: currentColor; animation: bounce 1s infinite; }
+  .thinking span:nth-child(2) { animation-delay: .15s; }
+  .thinking span:nth-child(3) { animation-delay: .3s; }
+  @keyframes bounce { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+  /* ---------- hidden cost ---------- */
+  .cost { background: var(--panel); border-radius: 18px; padding: 24px; margin-top: 32px; }
+  .cost h2 { font-family: Georgia, serif; font-size: clamp(1.5rem, 3vw, 2rem); margin: 0 0 4px; }
+  .cost .sub { margin: 0 0 18px; color: var(--ink-soft); }
+  .slider-row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+  #tools { flex: 1; min-width: 200px; accent-color: var(--tomato); }
+  #toolCount { font-size: 2rem; font-weight: bold; font-family: Georgia, serif; min-width: 4ch; }
+  .bars { margin-top: 20px; display: grid; grid-template-columns: 60px 1fr; gap: 10px 14px; align-items: center; }
+  .bar-row { display: flex; align-items: center; gap: 10px; }
+  .bar { height: 30px; border-radius: 15px; min-width: 8px; transition: width .4s ease; }
+  .bar.cli { background: var(--tomato); }
+  .bar.mcp { background: var(--basil); }
+  .val { font-weight: bold; white-space: nowrap; }
+  #costText { font-size: 1.15rem; margin: 18px 0 4px; }
+  .cost .note { margin-top: 8px; }
+
+  footer { margin-top: 32px; font-size: .9rem; color: var(--ink-soft); }
+  footer a { color: inherit; }
+
+  @media (prefers-reduced-motion: reduce) {
+    .thinking span { animation: none; }
+    .bar { transition: none; }
+  }
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <div>
+      <h1>🍕 The Arena</h1>
+      <p class="tagline">Same question. Three AIs. Who gets it right?</p>
+    </div>
+    <div id="badge" class="badge offline">Loading…</div>
+  </header>
+
+  <section class="setup" id="setup">
+    <h2>No API key and no replay found</h2>
+    <p>Pick one way to start:</p>
+    <p><strong>Live:</strong> create a <code>.env</code> file from the example, paste your key, and restart the app.</p>
+    <pre>copy .env.example .env     # Mac/Linux: cp .env.example .env</pre>
+    <p>Inside <code>.env</code>:</p>
+    <pre>ANTHROPIC_API_KEY=sk-ant-your-real-key</pre>
+    <pre>python app.py</pre>
+    <p>Get a key at <a href="https://console.anthropic.com">console.anthropic.com</a> (Settings &gt; API keys).</p>
+    <p><strong>Replay:</strong> someone with a key runs this once and shares <code>runs/demo.json</code>.</p>
+    <pre>python app.py --record</pre>
+  </section>
+
+  <section class="ask">
+    <p class="ask-label">Ask the pizza shop something</p>
+    <div class="chips" id="chips"></div>
+    <div class="row">
+      <input id="question" type="text" placeholder="e.g. How much is a large Margherita?" aria-label="Your question">
+      <button id="go">Ask all three</button>
+    </div>
+  </section>
+
+  <section class="arena" id="arena"></section>
+
+  <section class="cost">
+    <h2>The hidden cost</h2>
+    <p class="sub">MCP sends the full "menu" of tools with every question. Drag to add more tools.</p>
+    <div class="slider-row">
+      <label for="tools">MCP tools</label>
+      <input id="tools" type="range" min="0" max="6" step="1" value="0">
+      <span id="toolCount">3</span>
+    </div>
+    <div class="bars">
+      <strong>CLI</strong><div class="bar-row"><div class="bar cli" id="barCli"></div><span class="val"></span></div>
+      <strong>MCP</strong><div class="bar-row"><div class="bar mcp" id="barMcp"></div><span class="val"></span></div>
+    </div>
+    <p id="costText">Counting real tokens…</p>
+    <p class="note">Real token counts from the API. Only 3 MCP tools are real; the others are fake pizza-shop tools, just counted, never run. The CLI may also spend one extra call reading <code>--help</code>.</p>
+  </section>
+
+  <footer>
+    Nona Byte Pizza is fake, so the AI can't know the menu from memory.
+    Code: <a href="https://github.com/DenisHBernardino/ai-with-cli">github.com/DenisHBernardino/ai-with-cli</a>
+  </footer>
+</main>
+
+<script>
+const MODES = [
+  { id: "none", name: "No tools", sub: "Memory only" },
+  { id: "cli",  name: "With CLI", sub: "Runs the pizza command" },
+  { id: "mcp",  name: "With MCP", sub: "Calls MCP tools" },
+];
+const STEPS = [3, 5, 10, 20, 30, 40, 50];
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const score = { none: [0, 0], cli: [0, 0], mcp: [0, 0] };
+let status = null;
+let costs = null;
+
+const $ = (sel) => document.querySelector(sel);
+const sleep = (ms) => new Promise((r) => setTimeout(r, REDUCED ? 0 : ms));
+
+function el(tag, cls, text) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text !== undefined) e.textContent = text;
+  return e;
+}
+
+async function typeInto(node, text, speed) {
+  if (REDUCED || text.length > 600) { node.textContent = text; return; }
+  for (let i = 0; i < text.length; i += 2) {
+    node.textContent = text.slice(0, i + 2);
+    await sleep(speed);
+  }
+}
+
+// ---------- setup ----------
+
+function buildColumns() {
+  const arena = $("#arena");
+  for (const m of MODES) {
+    const col = el("article", "col");
+    col.dataset.mode = m.id;
+    const head = el("div", "col-head");
+    const titles = el("div");
+    titles.append(el("h2", "", m.name), el("p", "", m.sub));
+    head.append(titles, el("span", "score", ""));
+    const body = el("div", "col-body");
+    body.append(el("p", "empty", "Waiting for a question…"));
+    col.append(head, body, el("div", "stats"));
+    arena.append(col);
+  }
+}
+
+async function init() {
+  buildColumns();
+  status = await (await fetch("/api/status")).json();
+
+  const badge = $("#badge");
+  const labels = { live: "🟢 Live AI", replay: "🎬 Replay of a real run", offline: "⚪ Offline" };
+  badge.textContent = labels[status.mode];
+  badge.className = "badge " + status.mode;
+  if (status.mode !== "offline") badge.textContent += ": " + status.model;
+
+  for (const q of status.questions) {
+    const chip = el("button", "chip", q);
+    chip.onclick = () => { $("#question").value = q; askAll(); };
+    $("#chips").append(chip);
+  }
+
+  if (status.mode === "offline") {
+    $("#setup").style.display = "block";
+    $("#go").disabled = true;
+    $("#question").disabled = true;
+    document.querySelectorAll(".chip").forEach((c) => (c.disabled = true));
+  }
+  if (status.mode === "replay") {
+    $("#question").readOnly = true;
+    $("#question").placeholder = "Replay mode: pick a test question above";
+  }
+
+  $("#go").onclick = askAll;
+  $("#question").addEventListener("keydown", (e) => { if (e.key === "Enter") askAll(); });
+  $("#tools").addEventListener("input", drawCosts);
+  loadCosts();
+}
+
+// ---------- the arena ----------
+
+async function askAll() {
+  const question = $("#question").value.trim();
+  if (!question || $("#go").disabled) return;
+  $("#go").disabled = true;
+  document.querySelectorAll(".chip").forEach((c) => (c.disabled = true));
+  await Promise.all(MODES.map((m) => askOne(question, m.id)));
+  $("#go").disabled = false;
+  document.querySelectorAll(".chip").forEach((c) => (c.disabled = false));
+}
+
+async function askOne(question, mode) {
+  const col = document.querySelector(`.col[data-mode="${mode}"]`);
+  const body = col.querySelector(".col-body");
+  const stats = col.querySelector(".stats");
+  body.replaceChildren();
+  stats.replaceChildren();
+  const thinking = el("div", "thinking");
+  thinking.innerHTML = "<span></span><span></span><span></span> thinking";
+  body.append(thinking);
+
+  let data;
+  try {
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ question, mode }),
+    });
+    data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Request failed");
+  } catch (err) {
+    thinking.remove();
+    body.append(el("p", "error", "⚠️ " + err.message));
+    return;
+  }
+  thinking.remove();
+
+  // 1. Replay every tool the AI used, one by one
+  for (const step of data.trace) {
+    const box = el("div", "step");
+    const cmd = el("div", "cmd");
+    box.append(cmd);
+    body.append(box);
+    await typeInto(cmd, (mode === "cli" ? "$ " : "🔌 ") + step.call, 18);
+    if (step.call.includes("--help")) box.append(el("span", "tag", "🧭 Learning the tool by itself"));
+    if (step.output.startsWith("Error")) box.append(el("span", "tag", "🔁 Got an error, will fix it"));
+    const details = el("details");
+    const lines = step.output.split("\n").length;
+    details.append(el("summary", "", `output (${lines} line${lines > 1 ? "s" : ""})`), el("pre", "", step.output));
+    box.append(details);
+    await sleep(350);
+  }
+
+  // 2. The final answer
+  const answer = el("div", "answer");
+  body.append(answer);
+  await typeInto(answer, data.answer, 10);
+  if (mode === "none") body.append(el("p", "note", "Answered from memory. No data was checked."));
+
+  // 3. Right or wrong?
+  if (data.correct === true) body.append(el("p", "verdict ok", "✅ Correct"));
+  else if (data.correct === false) body.append(el("p", "verdict bad", "❌ Wrong"));
+  else body.append(el("p", "note", "Your own question: no answer key, you be the judge."));
+
+  stats.append(
+    el("span", "", `🪙 ${data.tokens.toLocaleString("en-US")} tokens`),
+    el("span", "", `🔧 ${data.calls} tool call${data.calls === 1 ? "" : "s"}`),
+    el("span", "", `⏱️ ${data.seconds}s`)
+  );
+
+  if (data.correct !== null && data.correct !== undefined) {
+    score[mode][1] += 1;
+    if (data.correct) score[mode][0] += 1;
+    col.querySelector(".score").textContent = `${score[mode][0]}/${score[mode][1]} right`;
+  }
+}
+
+// ---------- the hidden cost ----------
+
+async function loadCosts() {
+  try {
+    const res = await fetch("/api/costs");
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error);
+    costs = data;
+    drawCosts();
+  } catch (err) {
+    $("#costText").textContent = "⚠️ " + err.message;
+  }
+}
+
+function drawCosts() {
+  const n = STEPS[$("#tools").value];
+  $("#toolCount").textContent = n;
+  if (!costs) return;
+  const cli = costs.cli;
+  const mcp = costs.mcp[n];
+  const max = costs.mcp[STEPS[STEPS.length - 1]];
+  setBar($("#barCli"), cli, max);
+  setBar($("#barMcp"), mcp, max);
+  const ratio = (mcp / cli).toFixed(1);
+  const words = Math.round(mcp * 0.75).toLocaleString("en-US");
+  $("#costText").textContent =
+    `With ${n} tools, MCP adds ${mcp.toLocaleString("en-US")} tokens to every question ` +
+    `(${ratio}× the CLI, about ${words} words) before the AI even reads it.`;
+}
+
+function setBar(bar, value, max) {
+  // the longest bar uses 75% of the row, the rest is room for the number
+  bar.style.width = Math.max(1, (value / max) * 75) + "%";
+  bar.nextElementSibling.textContent = value.toLocaleString("en-US") + " tokens";
+}
+
+init();
+</script>
+</body>
+</html>
